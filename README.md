@@ -1,13 +1,15 @@
+# Work in progress. Not yet open for distribution
+
 vim-nose
 ========
 
-Plugin wrapping nosetests command to be execute python tests inside Vim. All for the name of productivity!
+Plugin wrapping `nosetests` command line tool to execute python tests inside Vim. All in the name of productivity!
 
 Requirements
 ============
 
-- [vim-dispatch Vim plugin](<https://github.com/tpope/vim-dispatch>) is installed. `vim-nose` leverage the work done by Tim Pope (a.k.a tpope). It is built on top of `vim-dispatch`.
-- [nose package](https://nose.readthedocs.org/en/latest/) installed in your python (virtual) environment.
+- [vim-dispatch](<https://github.com/tpope/vim-dispatch>) Vim plugin is installed. `vim-nose` leverage the work done by Tim Pope (a.k.a **tpope**). It is built on top of `vim-dispatch`.
+- [nose](https://nose.readthedocs.org/en/latest/) installed in your python (virtual) environment.
 
 Features
 ========

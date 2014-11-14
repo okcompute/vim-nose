@@ -1,0 +1,7 @@
+*.py[cod]
+*.sw?
+*~
+.DS_Store
+_
+build
+tags

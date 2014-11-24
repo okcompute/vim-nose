@@ -1,3 +1,5 @@
+" ftplugin/python/nose.vim
+" Author: Pascal Lalancette (okcompute@icloud.com)
 
 
 if !has('python')
@@ -5,14 +7,14 @@ if !has('python')
     finish
 endif
 
-function! s:GetVirtualEnv()
+function! s:get_virtual_env_path()
     " TODO: Check for prensence of $VIRTUAL_ENV env var
     " TODO: Get VirtualEnv folder from Git configuration if .venv file is not
     " used.
-    return s:GetVirtualEnvFromConfig()
+    return s:read_virtualenv_config_from_file()
 endfunction
 
-function! s:GetVirtualEnvFromConfig()
+function! s:read_virtualenv_config_from_file()
     let venv_config = findfile(".venv", ".;")
     if !filereadable(venv_config)
         return
@@ -32,14 +34,13 @@ EOF
 return l:path
 endfunction
 
-function! s:GetVirtualEnvFromGit()
+function! s:read_virtualenv_config_from_git()
 endfunction
 
-function! s:GetFilename()
-    return expand("%")
+function! s:read_virtualenv_config_from_env_var()
 endfunction
 
-function! s:GetTest()
+function! s:get_current_test()
 python << EOF
 import code_analyzer
 import vim
@@ -54,18 +55,10 @@ EOF
     return l:test
 endfunction
 
-function! s:GetArguments()
-    let filename = s:GetFilename()
-    let test_function = s:GetTest()
-    " return filename.":".test_function
-    return test_function
-endfunction
-
-
-function! s:RunLocal()
+function! s:run_local_test() abort
     let old_path = $PATH
-    let $PATH=s:GetVirtualEnv().":".$PATH
-    let args = s:GetArguments()
+    let $PATH=s:get_virtual_env_path().":".$PATH
+    let args = s:get_current_test()
     try
         if exists(":Make")
             echo args
@@ -78,21 +71,10 @@ function! s:RunLocal()
     endtry
 endfunction
 
-function! s:Run()
+function! s:run_all() abort
     let old_path = $PATH
-    let $PATH=s:GetVirtualEnv().":".$PATH
+    let $PATH=s:get_virtual_env_path().":".$PATH
     "TODO: Implement me!
-    " let args = s:GetArguments()
-    " try
-    "     if exists(":Make")
-    "         echo args
-    "         exec ":Make ".args
-    "     else
-    "         exec ":make". args
-    "     endif
-    " finally
-    "     let $PATH = old_path
-    " endtry
 endfunction
 
 " Set compiler
@@ -102,9 +84,9 @@ compiler nose
 " ================
 
 if !exists(":RunLocal")
-    command RunLocal :call <SID>RunLocal()
+    command RunLocal :call <SID>run_local_test()
 endif
 
 if !exists(":Run")
-    command Run :call <SID>Run()
+    command Run :call <SID>run_all()
 endif

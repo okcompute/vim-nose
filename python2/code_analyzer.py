@@ -64,25 +64,3 @@ def get_complete_function_name_at(file_, position, limit=None):
 
     if names:
         return '.'.join(names)
-
-
-# def get_complete_function_name_in_view(view, limit=None):
-#     """
-#     Get the dot-separated name of the function in the current view.
-#     """
-#     position = view.rowcol(view.sel()[0].begin())
-
-#     return get_complete_function_name_at(view.file_name(), position, limit)
-
-
-# def get_complete_test_and_function_name_in_view(view, limit=None):
-#     """
-#     Get the filename and function name of the function in the current view.
-#     """
-#     filename = os.path.basename(view.file_name())
-#     function_name = get_complete_function_name_in_view(view, limit)
-
-#     if function_name:
-#         return ':'.join([filename, function_name])
-#     else:
-#         return filename

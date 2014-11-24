@@ -20,8 +20,6 @@ endif
 " Modified from pyunit, remove other lines from quickfix window
 CompilerSet efm=%-C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m,%-G%.%#
 
-"" Set nose as default compiler
-" CompilerSet makeprg=nosetests
-" Quite ugly but this make it ignore vim-makegreen passing argument for now
-CompilerSet makeprg=echo\ $*\ >/dev/null;\ nosetests\ $*
+" Set nose as default compiler
+CompilerSet makeprg=nosetests\ $*
 

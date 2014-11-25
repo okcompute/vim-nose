@@ -43,7 +43,7 @@ def __get_best_matching_chain(node, lineno):
     """
     result = []
 
-    while node and __get_line(node) < lineno:
+    while node and __get_line(node) <= lineno:
         result.append(node)
         node = __get_best_matching_child(node, lineno)
 

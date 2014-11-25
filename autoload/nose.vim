@@ -15,7 +15,7 @@ function! nose#get_virtual_env_path()
 endfunction
 
 function! nose#read_virtualenv_config_from_file()
-    let venv_config = findfile(".venv", ".;")
+    let venv_config = findfile(".venv", "./;")
     if !filereadable(venv_config)
         return
     endif
@@ -28,7 +28,12 @@ path = ""
 with open(venv_config) as vc:
     lines = [line for line in vc.readlines() if line]
     path = lines[0].strip()
-    path = os.path.normpath(os.path.join(os.path.dirname(venv_config), path, "bin"))
+    path = os.path.normpath(os.path.join(os.path.dirname(venv_config), path))
+    if os.name == 'nt':
+        path = os.path.join(path, "scripts")
+    else:
+        path = os.path.join(path, "bin")
+    path = path.replace("\\", "/")
     vim.command("let l:path=\"%s\"" % path)
 EOF
 return l:path
@@ -50,6 +55,8 @@ test_function = code_analyzer.get_complete_function_name_at(filename, position)
 test = filename
 if test_function:
     test = test + ":" + test_function
+# Always use Posix path (even on Windows)
+test = test.replace("\\", "/")
 vim.command("let l:test=\"%s\"" % test)
 EOF
     return l:test
@@ -57,7 +64,11 @@ endfunction
 
 function! nose#run_local_test() abort
     let old_path = $PATH
-    let $PATH=nose#get_virtual_env_path().":".$PATH
+    if has('win32')
+        let $PATH=nose#get_virtual_env_path().";".$PATH
+    else
+        let $PATH=nose#get_virtual_env_path().":".$PATH
+    endif
     let args = nose#get_current_test()
     try
         if exists(":Make")
@@ -73,6 +84,10 @@ endfunction
 
 function! nose#run_all() abort
     let old_path = $PATH
-    let $PATH=nose#get_virtual_env_path().":".$PATH
+    if has('win32')
+        let $PATH=nose#get_virtual_env_path().";".$PATH
+    else
+        let $PATH=nose#get_virtual_env_path().":".$PATH
+    endif
     "TODO: Implement me!
 endfunction

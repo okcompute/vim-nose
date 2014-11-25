@@ -13,7 +13,11 @@ compiler nose
 " ================
 
 if !exists(":RunLocal")
-    command RunLocal :call nose#run_local_test()
+    command RunLocal :call nose#run_local()
+endif
+
+if !exists(":RunLocalForeground")
+    command RunLocalForeground :call nose#run_local_foreground()
 endif
 
 if !exists(":Run")

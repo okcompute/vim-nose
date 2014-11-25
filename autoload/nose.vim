@@ -62,32 +62,36 @@ EOF
     return l:test
 endfunction
 
-function! nose#run_local_test() abort
+function! nose#run(args, ...) abort
+    let l:foreground = a:0 > 0 ? a:1 : 0
     let old_path = $PATH
     if has('win32')
         let $PATH=nose#get_virtual_env_path().";".$PATH
     else
         let $PATH=nose#get_virtual_env_path().":".$PATH
     endif
-    let args = nose#get_current_test()
     try
-        if exists(":Make")
-            echo args
-            exec ":Make ".args
+        if exists(":Make") && !l:foreground
+            exec ":Make ".a:args
         else
-            exec ":make". args
+            exec ":make". a:args
         endif
     finally
         let $PATH = old_path
     endtry
 endfunction
 
+function! nose#run_local() abort
+    let args = nose#get_current_test()
+    call nose#run(args)
+endfunction
+
+function! nose#run_local_foreground() abort
+    let args = nose#get_current_test()
+    call nose#run(args, 1)
+endfunction
+
 function! nose#run_all() abort
-    let old_path = $PATH
-    if has('win32')
-        let $PATH=nose#get_virtual_env_path().";".$PATH
-    else
-        let $PATH=nose#get_virtual_env_path().":".$PATH
-    endif
-    "TODO: Implement me!
+    let args = nose#get_all_test()
+    call nose#run(args)
 endfunction

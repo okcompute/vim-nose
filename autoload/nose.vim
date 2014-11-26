@@ -86,9 +86,9 @@ function! nose#run_local() abort
     call nose#run(args)
 endfunction
 
-function! nose#run_local_foreground() abort
+function! nose#debug() abort
     let args = nose#get_current_test()
-    call nose#run(args, 1)
+    call nose#run(args." -s", 1)
 endfunction
 
 function! nose#run_all() abort

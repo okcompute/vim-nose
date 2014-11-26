@@ -16,10 +16,10 @@ if !exists(":RunLocal")
     command RunLocal :call nose#run_local()
 endif
 
-if !exists(":RunLocalForeground")
-    command RunLocalForeground :call nose#run_local_foreground()
+if !exists(":Debug")
+    command Debug :call nose#debug()
 endif
 
-if !exists(":Run")
-    command Run :call nose#run_all()
+if !exists(":RunAll")
+    command RunAll :call nose#run_all()
 endif

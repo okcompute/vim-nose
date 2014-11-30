@@ -51,7 +51,12 @@ import code_analyzer
 import vim
 position = vim.current.window.cursor
 filename  = vim.current.buffer.name
-test_function = code_analyzer.get_complete_function_name_at(filename, position)
+try:
+    test_function = code_analyzer.get_complete_function_name_at(filename, position)
+except:
+    # No function found because there is an error in the parsed file. Let nose
+    # found the error too and show it in the quickfix window.
+    test_function = ""
 test = filename
 if test_function:
     test = test + ":" + test_function

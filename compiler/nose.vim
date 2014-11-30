@@ -1,12 +1,7 @@
 " Vim compiler file
-" Compiler:	Unit testing for Python using nose
-" Maintainer:	Olivier Le Thanh Duong <olivier@lethanh.be>
-" Last Change: 2010 Sep 1
-
-" Based on pyunit.vim distributed with vim
-" Compiler:	Unit testing tool for Python
-" Maintainer:	Max Ischenko <mfi@ukr.net>
-" Last Change: 2004 Mar 27
+" Compiler:	Nose compiler for running python tests.
+" Maintainer:	Pascal Lalancette <okcompute@icloud.com>
+" Created: November 29th 2014
 
 if exists("current_compiler")
   finish
@@ -17,9 +12,11 @@ if exists(":CompilerSet") != 2		" older Vim always used :setlocal
   command -nargs=* CompilerSet setlocal <args>
 endif
 
-" Modified from pyunit, remove other lines from quickfix window
-CompilerSet efm=%-C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m,%-G%.%#
+" Modified from vim documentation so the correct file is found (see 'nose.py'
+" to understand how the output is transformed for this specific 'errorformat').
+CompilerSet efm=%-C\ %.%#,%A*\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m,%-G%.%#
 
-" Set nose as default compiler
-CompilerSet makeprg=nosetests\ $*
-
+" Assign a python script to 'makeprg'. This script will launch 'nose' and
+" transform its output for the configured 'errorformat' above.
+let s:nose="python ".expand("<sfile>:p:h")."/nose.py"
+let &l:makeprg=s:nose

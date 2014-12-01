@@ -12,8 +12,8 @@ compiler nose
 " Command Mappings
 " ================
 
-if !exists(":RunLocal")
-    command RunLocal :call nose#run_local()
+if !exists(":RunTest")
+    command RunTest :call nose#run()
 endif
 
 if !exists(":Debug")
@@ -21,5 +21,5 @@ if !exists(":Debug")
 endif
 
 if !exists(":RunAll")
-    command RunAll :call nose#run_all()
+    command RunAllTests :call nose#run_all()
 endif

@@ -67,36 +67,46 @@ EOF
     return l:test
 endfunction
 
-function! nose#run(args, ...) abort
-    let l:foreground = a:0 > 0 ? a:1 : 0
+function! nose#run() abort
     let old_path = $PATH
     if has('win32')
         let $PATH=nose#get_virtual_env_path().";".$PATH
     else
         let $PATH=nose#get_virtual_env_path().":".$PATH
     endif
+    let cmd = "make "
+    if exists(":Make")
+        let l:cmd = ":Make "
+    endif
+    let args = nose#get_current_test()
     try
-        if exists(":Make") && !l:foreground
-            exec ":Make ".a:args
-        else
-            exec ":make". a:args
-        endif
+        exec l:cmd.l:args
     finally
         let $PATH = old_path
     endtry
 endfunction
 
-function! nose#run_local() abort
-    let args = nose#get_current_test()
-    call nose#run(args)
+function! nose#run_all() abort
+    call nose#run()
 endfunction
 
 function! nose#debug() abort
+    let old_path = $PATH
+    if has('win32')
+        let $PATH=nose#get_virtual_env_path().";".$PATH
+    else
+        let $PATH=nose#get_virtual_env_path().":".$PATH
+    endif
+    let cmd = ":!"
+    if exists(":Start")
+        let cmd = ":Start "
+    elseif has('win32')
+        let cmd = ":!start "
+    endif
     let args = nose#get_current_test()
-    call nose#run(args." -s", 1)
-endfunction
-
-function! nose#run_all() abort
-    let args = nose#get_all_test()
-    call nose#run(args)
+    try
+        exec l:cmd."nosetests -s ".l:args
+    finally
+        let $PATH = old_path
+    endtry
 endfunction

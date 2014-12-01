@@ -59,6 +59,14 @@ endfunction
 function! nose#read_virtualenv_config_from_env_var()
 endfunction
 
+function! nose#git_repository_root()
+    let root =  system('git rev-parse --show-toplevel')
+    if v:shell_error
+        throw "Git not available for project root discovery!"
+    endif
+    return l:root
+endfunction
+
 function! nose#get_current_test()
 python << EOF
 import code_analyzer
@@ -81,27 +89,32 @@ EOF
     return l:test
 endfunction
 
-function! nose#run() abort
+function! nose#run(...) abort
     let old_path = nose#pre_command()
     let cmd = "make "
     if exists(":Make")
         let l:cmd = ":Make "
     endif
-    let args = nose#get_current_test()
     try
-        exec l:cmd.l:args
+        exec l:cmd.join(a:000)
     finally
         call nose#post_command(old_path)
     endtry
 endfunction
 
-function! nose#run_all() abort
-    let old_path = nose#pre_command()
-    echo "Not implemented!"
-    call nose#post_command(old_path)
+function! nose#run_test() abort
+    call nose#run(nose#get_current_test())
 endfunction
 
-function! nose#debug() abort
+function! nose#run_all() abort
+    try
+        call nose#run(nose#git_repository_root())
+    catch /^Git/
+        echo "Cannot run all tests: ".v:exception
+    endtry
+endfunction
+
+function! nose#debug(...) abort
     let old_path = nose#pre_command()
     let cmd = ":!"
     if exists(":Start")
@@ -109,10 +122,21 @@ function! nose#debug() abort
     elseif has('win32')
         let cmd = ":!start "
     endif
-    let args = nose#get_current_test()
     try
-        exec l:cmd."nosetests -s ".l:args
+        exec l:cmd."nosetests -s ".join(a:000)
     finally
         call nose#post_command(old_path)
+    endtry
+endfunction
+
+function! nose#debug_test() abort
+    call nose#debug(nose#get_current_test())
+endfunction
+
+function! nose#debug_all() abort
+    try
+        call nose#debug(nose#git_repository_root())
+    catch /^Git/
+        echo "Cannot debug all tests: ".v:exception
     endtry
 endfunction

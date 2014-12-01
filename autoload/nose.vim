@@ -7,6 +7,20 @@ if !has('python')
     finish
 endif
 
+function! nose#pre_command()
+    let old_path = $PATH
+    if has('win32')
+        let $PATH=nose#get_virtual_env_path().";".$PATH
+    else
+        let $PATH=nose#get_virtual_env_path().":".$PATH
+    endif
+    return old_path
+endfunction
+
+function! nose#post_command(old_path)
+    let $PATH = a:old_path
+endfunction
+
 function! nose#get_virtual_env_path()
     " TODO: Check for prensence of $VIRTUAL_ENV env var
     " TODO: Get VirtualEnv folder from Git configuration if .venv file is not
@@ -68,12 +82,7 @@ EOF
 endfunction
 
 function! nose#run() abort
-    let old_path = $PATH
-    if has('win32')
-        let $PATH=nose#get_virtual_env_path().";".$PATH
-    else
-        let $PATH=nose#get_virtual_env_path().":".$PATH
-    endif
+    let old_path = nose#pre_command()
     let cmd = "make "
     if exists(":Make")
         let l:cmd = ":Make "
@@ -82,21 +91,18 @@ function! nose#run() abort
     try
         exec l:cmd.l:args
     finally
-        let $PATH = old_path
+        call nose#post_command(old_path)
     endtry
 endfunction
 
 function! nose#run_all() abort
-    call nose#run()
+    let old_path = nose#pre_command()
+    echo "Not implemented!"
+    call nose#post_command(old_path)
 endfunction
 
 function! nose#debug() abort
-    let old_path = $PATH
-    if has('win32')
-        let $PATH=nose#get_virtual_env_path().";".$PATH
-    else
-        let $PATH=nose#get_virtual_env_path().":".$PATH
-    endif
+    let old_path = nose#pre_command()
     let cmd = ":!"
     if exists(":Start")
         let cmd = ":Start "
@@ -107,6 +113,6 @@ function! nose#debug() abort
     try
         exec l:cmd."nosetests -s ".l:args
     finally
-        let $PATH = old_path
+        call nose#post_command(old_path)
     endtry
 endfunction

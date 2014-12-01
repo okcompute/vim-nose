@@ -16,10 +16,11 @@ if !exists(":RunTest")
     command RunTest :call nose#run()
 endif
 
+if !exists(":RunAll")
+    command RunAllTests :call nose#run_all()
+endif
+
 if !exists(":Debug")
     command Debug :call nose#debug()
 endif
 
-if !exists(":RunAll")
-    command RunAllTests :call nose#run_all()
-endif

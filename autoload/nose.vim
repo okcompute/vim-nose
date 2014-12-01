@@ -67,6 +67,10 @@ function! nose#git_repository_root()
     return l:root
 endfunction
 
+function! nose#get_current_module()
+    return expand("%:p")
+endfunction
+
 function! nose#get_current_test()
 python << EOF
 import code_analyzer
@@ -102,18 +106,6 @@ function! nose#run(...) abort
     endtry
 endfunction
 
-function! nose#run_test() abort
-    call nose#run(nose#get_current_test())
-endfunction
-
-function! nose#run_all() abort
-    try
-        call nose#run(nose#git_repository_root())
-    catch /^Git/
-        echo "Cannot run all tests: ".v:exception
-    endtry
-endfunction
-
 function! nose#debug(...) abort
     let old_path = nose#pre_command()
     let cmd = ":!"
@@ -129,7 +121,27 @@ function! nose#debug(...) abort
     endtry
 endfunction
 
+function! nose#run_test() abort
+    call nose#run(nose#get_current_test())
+endfunction
+
+function! nose#run_module() abort
+    call nose#run(nose#get_current_module())
+endfunction
+
+function! nose#run_all() abort
+    try
+        call nose#run(nose#git_repository_root())
+    catch /^Git/
+        echo "Cannot run all tests: ".v:exception
+    endtry
+endfunction
+
 function! nose#debug_test() abort
+    call nose#debug(nose#get_current_test())
+endfunction
+
+function! nose#debug_module() abort
     call nose#debug(nose#get_current_test())
 endfunction
 

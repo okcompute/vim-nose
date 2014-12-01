@@ -13,7 +13,11 @@ compiler nose
 " ================
 
 if !exists(":RunTest")
-    command RunTest :call nose#run()
+    command RunTest :call nose#run_test()
+endif
+
+if !exists(":RunModule")
+    command RunModule :call nose#run_module()
 endif
 
 if !exists(":RunAll")
@@ -21,6 +25,14 @@ if !exists(":RunAll")
 endif
 
 if !exists(":Debug")
-    command Debug :call nose#debug()
+    command Debug :call nose#debug_test()
+endif
+
+if !exists(":DebugModule")
+    command DebugModule :call nose#debug_module()
+endif
+
+if !exists(":DebugAll")
+    command DebugAll :call nose#debug_all()
 endif
 

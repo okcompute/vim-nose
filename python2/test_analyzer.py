@@ -37,3 +37,17 @@ class TestCodeAnalyzer(unittest.TestCase):
         # Note: See `fixture\code_template.py` line # 0
         result = code_analyzer.get_complete_function_name_at(self.source, (0, 0))
         self.assertIsNone(result)
+
+    def test_get_function_name_with_limit(self):
+        """ Test lookup for function name when the line number is set to the
+        module first line. """
+        # Note: See `fixture\code_template.py` line # 0
+        result = code_analyzer.get_complete_function_name_at(self.source, (12, 0), 1)
+        self.assertEqual(result, "MyClass")
+
+    def test_get_function_name_with_large_limit(self):
+        """ Test lookup for function name when the line number is set to the
+        module first line. """
+        # Note: See `fixture\code_template.py` line # 0
+        result = code_analyzer.get_complete_function_name_at(self.source, (15, 0), 10)
+        self.assertEqual(result, "MyClass.function_2")

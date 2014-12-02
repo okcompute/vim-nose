@@ -16,6 +16,10 @@ if !exists(":RunTest")
     command RunTest :call nose#run_test()
 endif
 
+if !exists(":RunCase")
+    command RunCase :call nose#run_case()
+endif
+
 if !exists(":RunModule")
     command RunModule :call nose#run_module()
 endif
@@ -26,6 +30,10 @@ endif
 
 if !exists(":Debug")
     command Debug :call nose#debug_test()
+endif
+
+if !exists(":DebugCase")
+    command DebugCase :call nose#debug_case()
 endif
 
 if !exists(":DebugModule")

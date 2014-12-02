@@ -67,18 +67,20 @@ function! nose#git_repository_root()
     return l:root
 endfunction
 
-function! nose#get_current_module()
-    return expand("%:p")
-endfunction
-
-function! nose#get_current_test()
+function! nose#get_current_test(...)
+let l:limit=""
+if a:0
+    let l:limit=a:1
+endif
 python << EOF
 import code_analyzer
 import vim
 position = vim.current.window.cursor
 filename  = vim.current.buffer.name
+limit = vim.eval("l:limit")
+limit = int(limit) if limit else None
 try:
-    test_function = code_analyzer.get_complete_function_name_at(filename, position)
+    test_function = code_analyzer.get_complete_function_name_at(filename, position, limit)
 except:
     # No function found because there is an error in the parsed file. Let nose
     # found the error too and show it in the quickfix window.
@@ -91,6 +93,10 @@ test = test.replace("\\", "/")
 vim.command("let l:test=\"%s\"" % test)
 EOF
     return l:test
+endfunction
+
+function! nose#get_current_module()
+    return expand("%:p")
 endfunction
 
 function! nose#run(...) abort
@@ -125,6 +131,11 @@ function! nose#run_test() abort
     call nose#run(nose#get_current_test())
 endfunction
 
+function! nose#run_case() abort
+    let level=1
+    call nose#run(nose#get_current_test(level))
+endfunction
+
 function! nose#run_module() abort
     call nose#run(nose#get_current_module())
 endfunction
@@ -139,6 +150,11 @@ endfunction
 
 function! nose#debug_test() abort
     call nose#debug(nose#get_current_test())
+endfunction
+
+function! nose#debug_case() abort
+    let level=1
+    call nose#debug(nose#get_current_test(level))
 endfunction
 
 function! nose#debug_module() abort

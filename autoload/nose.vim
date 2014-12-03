@@ -16,7 +16,9 @@ function! nose#prepare_virtualenv()
             let $PATH=nose#get_virtual_env_path().":".$PATH
         endif
     catch /^No virtualenv/
-        echo "vim-nose: No virtualenv found!"
+        if !exists('$VIRTUALENV')
+            echo "vim-nose: No virtualenv found!"
+        endif
     endtry
     return old_path
 endfunction
@@ -34,10 +36,7 @@ function! nose#get_virtual_env_path()
         return nose#read_virtualenv_config_from_git()
     catch /^Configuration/
     endtry
-    try
-        return nose#read_virtualenv_config_from_env()
-    catch /^Configuration/
-    endtry
+    throw "No virtualenv configuration found"
 endfunction
 
 function! nose#read_virtualenv_config_from_file()
@@ -89,10 +88,6 @@ vim.command("let l:path=\"%s\"" % path)
 EOF
 
     return l:path
-endfunction
-
-function! nose#read_virtualenv_config_from_env()
-    throw "Configuration not found. `VIRTUALENV` environment variable not set."
 endfunction
 
 function! nose#git_repository_root()

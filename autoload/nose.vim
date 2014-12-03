@@ -8,19 +8,21 @@ if !has('python')
 endif
 
 function! nose#prepare_virtualenv()
-    let old_path = $PATH
+    let l:old_path = $PATH
     try
-        if has('win32')
-            let $PATH=nose#get_virtual_env_path().";".$PATH
-        else
-            let $PATH=nose#get_virtual_env_path().":".$PATH
-        endif
+        let l:venv=nose#get_virtual_env_path()
     catch /^No virtualenv/
         if !exists('$VIRTUALENV')
             echo "vim-nose: No virtualenv found!"
+            return l:old_path
         endif
     endtry
-    return old_path
+    if has('win32')
+        let $PATH=l:venv.";".$PATH
+    else
+        let $PATH=l:venv.":".$PATH
+    endif
+    return l:old_path
 endfunction
 
 function! nose#reset_virtualenv(old_path)
@@ -30,11 +32,11 @@ endfunction
 function! nose#get_virtual_env_path()
     try
         return nose#read_virtualenv_config_from_file()
-    catch /^Configuration/
+    catch /^Configuration not found/
     endtry
     try
         return nose#read_virtualenv_config_from_git()
-    catch /^Configuration/
+    catch /^Configuration not found/
     endtry
     throw "No virtualenv configuration found"
 endfunction
@@ -47,17 +49,23 @@ function! nose#read_virtualenv_config_from_file()
 python << EOF
 import vim
 import os
-
 venv_config = vim.eval("venv_config")
 path = ""
 with open(venv_config) as vc:
     lines = [line for line in vc.readlines() if line]
     path = lines[0].strip()
+    # `path` comes from a configured value. Make sure possible `~` gets
+    # expanded
+    path = os.path.expanduser(path)
+    # reminder: os.path.join works with relative and absolute path. If second
+    # parameter is an existing absolute path, it will be the returned value.
     path = os.path.normpath(os.path.join(os.path.dirname(venv_config), path))
     if os.name == 'nt':
         path = os.path.join(path, "scripts")
     else:
         path = os.path.join(path, "bin")
+    # python is portable and rightfully manage correct path separators on
+    # every platform. Vim does it differently. Its all POSIX internally.
     path = path.replace("\\", "/")
     vim.command("let l:path=\"%s\"" % path)
 EOF
@@ -71,22 +79,23 @@ function! nose#read_virtualenv_config_from_git()
         configuration not set."
     endif
     let l:root = nose#git_repository_root()
-
 python << EOF
 import vim
 import os
 venv = vim.eval("l:venv").strip()
+# `venv` comes from a configured value. Make sure possible `~` gets expanded
+venv = os.path.expanduser(venv)
 root = vim.eval("l:root").strip()
-path = venv.strip()
 path = os.path.normpath(os.path.join(root, venv))
 if os.name == 'nt':
     path = os.path.join(path, "scripts")
 else:
     path = os.path.join(path, "bin")
+# python is portable and rightfully manage correct path separators on
+# every platform. Vim does it differently. Its all POSIX internally.
 path = path.replace("\\", "/")
 vim.command("let l:path=\"%s\"" % path)
 EOF
-
     return l:path
 endfunction
 

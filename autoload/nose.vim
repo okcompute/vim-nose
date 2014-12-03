@@ -7,31 +7,43 @@ if !has('python')
     finish
 endif
 
-function! nose#pre_command()
+function! nose#prepare_virtualenv()
     let old_path = $PATH
-    if has('win32')
-        let $PATH=nose#get_virtual_env_path().";".$PATH
-    else
-        let $PATH=nose#get_virtual_env_path().":".$PATH
-    endif
+    try
+        if has('win32')
+            let $PATH=nose#get_virtual_env_path().";".$PATH
+        else
+            let $PATH=nose#get_virtual_env_path().":".$PATH
+        endif
+    catch /^No virtualenv/
+        echo "vim-nose: No virtualenv found!"
+    endtry
     return old_path
 endfunction
 
-function! nose#post_command(old_path)
+function! nose#reset_virtualenv(old_path)
     let $PATH = a:old_path
 endfunction
 
 function! nose#get_virtual_env_path()
-    " TODO: Check for prensence of $VIRTUAL_ENV env var
-    " TODO: Get VirtualEnv folder from Git configuration if .venv file is not
-    " used.
-    return nose#read_virtualenv_config_from_file()
+    try
+        return nose#read_virtualenv_config_from_file()
+    catch /^Configuration/
+    endtry
+    try
+        return nose#read_virtualenv_config_from_git()
+    catch /^Configuration/
+    endtry
+    try
+        return nose#read_virtualenv_config_from_env()
+    catch /^Configuration/
+    endtry
 endfunction
 
 function! nose#read_virtualenv_config_from_file()
     let venv_config = findfile(".venv", "./;")
     if !filereadable(venv_config)
-        return
+        throw "Configuration not found.`.venv` file not found."
     endif
 python << EOF
 import vim
@@ -50,13 +62,37 @@ with open(venv_config) as vc:
     path = path.replace("\\", "/")
     vim.command("let l:path=\"%s\"" % path)
 EOF
-return l:path
-endfunction
+    return l:path
+    endfunction
 
 function! nose#read_virtualenv_config_from_git()
+    let l:venv =  system('git config vim-nose.venv')
+    if v:shell_error
+        throw "Configuration not found. Git not available or virtualenv \
+        configuration not set."
+    endif
+    let l:root = nose#git_repository_root()
+
+python << EOF
+import vim
+import os
+venv = vim.eval("l:venv").strip()
+root = vim.eval("l:root").strip()
+path = venv.strip()
+path = os.path.normpath(os.path.join(root, venv))
+if os.name == 'nt':
+    path = os.path.join(path, "scripts")
+else:
+    path = os.path.join(path, "bin")
+path = path.replace("\\", "/")
+vim.command("let l:path=\"%s\"" % path)
+EOF
+
+    return l:path
 endfunction
 
-function! nose#read_virtualenv_config_from_env_var()
+function! nose#read_virtualenv_config_from_env()
+    throw "Configuration not found. `VIRTUALENV` environment variable not set."
 endfunction
 
 function! nose#git_repository_root()
@@ -68,10 +104,10 @@ function! nose#git_repository_root()
 endfunction
 
 function! nose#get_current_test(...)
-let l:limit=""
-if a:0
-    let l:limit=a:1
-endif
+    let l:limit=""
+    if a:0
+        let l:limit=a:1
+    endif
 python << EOF
 import code_analyzer
 import vim
@@ -100,20 +136,15 @@ function! nose#get_current_module()
 endfunction
 
 function! nose#run(...) abort
-    let old_path = nose#pre_command()
     let cmd = "make "
     if exists(":Make")
         let l:cmd = ":Make "
     endif
-    try
-        exec l:cmd.join(a:000)
-    finally
-        call nose#post_command(old_path)
-    endtry
+    exec l:cmd.join(a:000)
 endfunction
 
 function! nose#debug(...) abort
-    let old_path = nose#pre_command()
+    let old_path = nose#prepare_virtualenv()
     let cmd = ":!"
     if exists(":Start")
         let cmd = ":Start "
@@ -123,12 +154,17 @@ function! nose#debug(...) abort
     try
         exec l:cmd."nosetests -s ".join(a:000)
     finally
-        call nose#post_command(old_path)
+        call nose#reset_virtualenv(old_path)
     endtry
 endfunction
 
 function! nose#run_test() abort
-    call nose#run(nose#get_current_test())
+    let old_path = nose#prepare_virtualenv()
+    try
+        call nose#run(nose#get_current_test())
+    finally
+        call nose#reset_virtualenv(old_path)
+    endtry
 endfunction
 
 function! nose#run_case() abort

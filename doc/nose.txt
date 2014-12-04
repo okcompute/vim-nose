@@ -1,0 +1,133 @@
+*nose.txt*	 For Vim version 7.4	 Last change: 2010 December 4
+
+*nose.txt*  An improved vim compiler for nose python tests runner (
+
+Author:  Pascal Lalancette <okcompute@icloud.com>
+License: Same terms as Vim itself (see |license|)
+
+==============================================================================
+CONTENTS                                               *nose-contents*
+
+    1. Introduction.................................|nose-intro|
+    2. Requirements.................................|nose-requirements|
+    3. VirtualEnv...................................|nose-virtualenv|
+    4. Commands.....................................|nose-commands|
+    5. About........................................|nose-about||
+
+==============================================================================
+INTRODUCTION                                            *nose*
+
+This plugin improve on Vim compiler option by adding some features specific
+to nose:
+
+    -   Configurable python virtual environment. Independent on your terminal
+        or current virtual environment.
+    -   Isolate tests to be run. Run a specific test, a test case, a test
+        module or all tests inside a git repository.
+    -   Improved vim *errorformat* detection. *quickfix* window will show the
+        correct error lines (surprisingly, it was not intuitive as one would
+        think to enable!)
+
+==============================================================================
+REQUIREMENTS                                            *nose-requirements*
+
+For this plugin to have some values, you need this requirements to be
+installed in your environment:
+    -   python
+    -   nose (https://nose.readthedocs.org)
+
+These requirement are optional but improve the plugin usage:
+    -   git
+
+==============================================================================
+VIRTUALENV                                              *nose-virtualenv*
+
+To discover {virtualenv}, the plugin will look into three places (in order):
+    1. |nose-config-file| The plugin configuration file.
+    2. |nose-config-git| An option configured in git.
+    3. $VIRTUALENV environment variable
+
+If none of these are available, tests will be ran in system environment.
+
+                                                        *nose-config-file*
+1. Configuration file~
+
+To configure {virtualenv} via a config file, save a file name ".venv" at the
+root of your project. In the file write the path location of the {virtualenv}
+folder. The path can be absolute or relative to the configuration file.
+
+For example, if I have a project X, at the root of the project I would have
+this tree:
+
+ \.venv             <= vim-nose config file
+ \venv              <= {virtualenv} folder
+ \source.py
+ \test.py
+
+The content of the file would simply be :
+.venv
+
+                                                        *nose-config-git*
+2. Git configuration~
+
+If you don't want to have extra file poluting your project, a local git
+configuration can be set:
+
+    git config --local vim-nose.venv venv
+
+This configure the {virualenv} folder to be relative to the git repository
+root at 'venv'.
+
+\{git root}\venv
+
+==============================================================================
+COMMANDS                                                *nose-commands*
+
+These commands are available only for *python* file type buffers.
+
+                                                        *nose-:RunTest*
+:RunTest                Run the current test surrounding the cursor position.
+                        Otherwise, run all tests in the scope the cursor is
+                        located in (i.e. test case or module).
+
+                                                        *nose-:RunTest!*
+:RunTest!               Like |:RunTest| but will start an interactive shell
+                        instead of running in the background. This is useful
+                        for debugging your test or program (ex.: pdb or ipdb).
+
+                                                        *nose-:RunCase*
+:RunCase                Run all tests found in the test case surrounding the
+                        cursor position. If cursor is outside a test case
+                        scope, all tests for the module (buffer) are run.
+
+                                                        *nose-:RunCase!*
+:RunCase!               Like |:RunCase| but will start an interactive shell
+                        instead of running in the background. This is useful
+                        for debugging your test or program (ex.: pdb or ipdb).
+
+                                                        *nose-:RunModule*
+:RunModule              Run all tests found in the current module (buffer).
+
+                                                        *nose-:RunModule!*
+:RunModule!             Like |:RunModule| but will start an interactive shell
+                        instead of running in the background. This is useful
+                        for debugging your test or program (ex.: pdb or ipdb).
+
+                                                        *nose-:RunAll*
+:RunModule              Run all tests found in the git repository of the
+                        edited buffer.
+
+                                                        *nose-:RunAll!*
+:RunAll!                Like |:RunAll| but will start an interactive shell
+                        instead of running in the background. This is useful
+                        for debugging your test or program (ex.: pdb or ipdb).
+
+
+==============================================================================
+ABOUT                                                   *nose-about*
+
+Grab the latest version or report a bug on GitHub:
+
+http://github.com/okcompute/vim-nose
+
+ vim:tw=78:et:ft=help:norl:

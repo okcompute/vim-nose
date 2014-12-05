@@ -139,72 +139,66 @@ function! nose#get_current_module()
     return expand("%:p")
 endfunction
 
-function! nose#run(...) abort
-    let cmd = "make "
-    if exists(":Make")
-        let l:cmd = ":Make "
+function! nose#compute_interactive_command()
+    let l:cmd = ":!"
+    if exists(":Start")
+        let l:cmd = ":Start "
+    elseif has('win32')
+        let l:cmd = ":!start "
     endif
+    return l:cmd."nosetests -s "
+endfunction
+
+function! nose#compute_command(interactive)
+    if a:interactive
+        return nose#compute_interactive_command()
+    elseif exists(":Make")
+        return ":Make "
+    else
+        return ":make "
+    endif
+endfunction
+
+function! nose#run(interactive, ...) abort
+    let l:cmd = nose#compute_command(a:interactive)
     exec l:cmd.join(a:000)
 endfunction
 
-function! nose#debug(...) abort
+function! nose#run_test(bang) abort
     let old_path = nose#prepare_virtualenv()
-    let cmd = ":!"
-    if exists(":Start")
-        let cmd = ":Start "
-    elseif has('win32')
-        let cmd = ":!start "
-    endif
     try
-        exec l:cmd."nosetests -s ".join(a:000)
+        call nose#run(a:bang, nose#get_current_test())
     finally
         call nose#reset_virtualenv(old_path)
     endtry
 endfunction
 
-function! nose#run_test() abort
-    let old_path = nose#prepare_virtualenv()
-    try
-        call nose#run(nose#get_current_test())
-    finally
-        call nose#reset_virtualenv(old_path)
-    endtry
-endfunction
-
-function! nose#run_case() abort
+function! nose#run_case(bang) abort
     let level=1
-    call nose#run(nose#get_current_test(level))
-endfunction
-
-function! nose#run_module() abort
-    call nose#run(nose#get_current_module())
-endfunction
-
-function! nose#run_all() abort
+    let old_path = nose#prepare_virtualenv()
     try
-        call nose#run(nose#git_repository_root())
-    catch /^Git/
+        call nose#run(a:bang, nose#get_current_test(level))
+    finally
+        call nose#reset_virtualenv(old_path)
+    endtry
+endfunction
+
+function! nose#run_module(bang) abort
+    let old_path = nose#prepare_virtualenv()
+    try
+        call nose#run(a:bang, nose#get_current_module())
+    finally
+        call nose#reset_virtualenv(old_path)
+    endtry
+endfunction
+
+function! nose#run_all(bang) abort
+    let old_path = nose#prepare_virtualenv()
+    try
+        call nose#run(a:bang, nose#git_repository_root())
+    catch /^Git not available/
         echo "Cannot run all tests: ".v:exception
-    endtry
-endfunction
-
-function! nose#debug_test() abort
-    call nose#debug(nose#get_current_test())
-endfunction
-
-function! nose#debug_case() abort
-    let level=1
-    call nose#debug(nose#get_current_test(level))
-endfunction
-
-function! nose#debug_module() abort
-    call nose#debug(nose#get_current_test())
-endfunction
-
-function! nose#debug_all() abort
-    try
-        call nose#debug(nose#git_repository_root())
-    catch /^Git/
-        echo "Cannot debug all tests: ".v:exception
+    finally
+        call nose#reset_virtualenv(old_path)
     endtry
 endfunction

@@ -12,35 +12,7 @@ compiler nose
 " Command Mappings
 " ================
 
-if !exists(":RunTest")
-    command RunTest :call nose#run_test()
-endif
-
-if !exists(":RunCase")
-    command RunCase :call nose#run_case()
-endif
-
-if !exists(":RunModule")
-    command RunModule :call nose#run_module()
-endif
-
-if !exists(":RunAll")
-    command RunAllTests :call nose#run_all()
-endif
-
-if !exists(":Debug")
-    command Debug :call nose#debug_test()
-endif
-
-if !exists(":DebugCase")
-    command DebugCase :call nose#debug_case()
-endif
-
-if !exists(":DebugModule")
-    command DebugModule :call nose#debug_module()
-endif
-
-if !exists(":DebugAll")
-    command DebugAll :call nose#debug_all()
-endif
-
+command! -bang RunTest :call nose#run_test(<bang>0)
+command! -bang RunCase :call nose#run_case(<bang>0)
+command! -bang RunModule :call nose#run_module(<bang>0)
+command! -bang RunAllTests :call nose#run_all(<bang>0)

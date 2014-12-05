@@ -41,28 +41,23 @@ See the plugin documentation for more details (**:h nose-virtualenv**).
 Usage
 =====
 
-`:RunTest`
-----------
+### `:RunTest`
 
 Run the current test surrounding the cursor position.  Otherwise, run all tests in the scope the cursor is located in (i.e. test case or module).
 
-`:RunCase`
-----------
+### `:RunCase`
 
 Run all tests found in the test case surrounding the cursor position. If cursor is outside a test case scope, all tests for the module (buffer) are run.
 
-`:RunModule`
-------------
+### `:RunModule`
 
 Run all tests found in the current module (buffer).
 
-`:RunAllTests`
---------------
+### `:RunAllTests`
 
 Run all tests found in the git repository of the edited buffer.
 
-Interactive commands
---------------------
+### Interactive commands
 
 All **:Run...** command can also be launched in interactive mode. This will run tests synchronously in an external console (if possible). This is useful for debugging your program or tests. For instance, using `ipdb` inside *gVim* or *MacVim* basic shell does not support coloring! This is an attempt to fix this problem.
 

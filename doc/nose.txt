@@ -116,11 +116,11 @@ These commands are available only for *python* file type buffers.
                         for debugging your test or program (ex.: pdb or ipdb).
 
                                                         *nose-:RunAll*
-:RunModule              Run all tests found in the git repository of the
+:RunAllTests            Run all tests found in the git repository of the
                         edited buffer.
 
                                                         *nose-:RunAll!*
-:RunAll!                Like |:RunAll| but will start an interactive shell
+:RunAllTests!           Like |:RunAll| but will start an interactive shell
                         instead of running in the background. This is useful
                         for debugging your test or program (ex.: pdb or ipdb).
 

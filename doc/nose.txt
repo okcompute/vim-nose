@@ -38,6 +38,8 @@ installed in your environment:
 
 These requirement are optional but improve the plugin usage:
     -   git
+    -   {vim-dispatch} by Tim Pope to run tests asynchronously
+        (https://github.com/tpope/vim-dispatch).
 
 ==============================================================================
 VIRTUALENV                                              *nose-virtualenv*

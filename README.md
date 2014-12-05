@@ -1,28 +1,81 @@
-# Work in progress. Not yet open for distribution
-
 vim-nose
 ========
 
 Plugin wrapping `nosetests` command line tool to execute python tests inside Vim. All in the name of productivity!
 
-Requirements
-============
-
-- [vim-dispatch](<https://github.com/tpope/vim-dispatch>) Vim plugin is installed. `vim-nose` leverage the work done by Tim Pope (a.k.a **tpope**). It is built on top of `vim-dispatch`.
-- [nose](https://nose.readthedocs.org/en/latest/) installed in your python (virtual) environment.
-
 Features
 ========
 
-- Expose commands to run python tests inside Vim (run current test, run current test case, ...)
-- Run tests asynchronously (thank you `vim-dispatch`!).
-- Output tests results in `quickfix` window for easy navigation.
-- `VirtualEnv` configuration and/or auto detection.
+This plugin improve on Vim compiler option by adding some features specific
+to nose:
+
+    -   Configurable python virtual environment. Independent on your terminal
+        or current virtual environment.
+    -   Isolate tests to be run. Run a specific test, a test case, a test
+        module or all tests inside a git repository.
+    -   Improved vim *errorformat* detection. *quickfix* window will show the
+        correct error lines (surprisingly, it was not intuitive as one would
+        think to enable!)
+
+Requirements
+============
+
+For this plugin to have some values, you need this requirements to be
+installed in your environment:
+    -   python
+    -   [nose](https://nose.readthedocs.org)
+
+These requirement are optional but improve the plugin usage:
+    -   git
+    -   [vim-dispatch](https://github.com/tpope/vim-dispatch) by Tim Pope to run tests asynchronously
+        .
+VirtualEnv Configuration
+========================
+
+Plugin support two configuration option to help discovery of virtual environment (See plugin documentation for more details).
+    1. A configuration file usually located at the root of your project.
+    1. A git configuration (`vim-nose.venv`) in your git repository
+
+If none of those configuration are set, the plugin will use either the system environment or any virtualenv already set in Vim process (terminal only).
 
 Usage
 =====
 
-TBD
+:RunTest                Run the current test surrounding the cursor position.
+                        Otherwise, run all tests in the scope the cursor is
+                        located in (i.e. test case or module).
+
+                                                        *nose-:RunTest!*
+:RunTest!               Like |:RunTest| but will start an interactive shell
+                        instead of running in the background. This is useful
+                        for debugging your test or program (ex.: pdb or ipdb).
+
+                                                        *nose-:RunCase*
+:RunCase                Run all tests found in the test case surrounding the
+                        cursor position. If cursor is outside a test case
+                        scope, all tests for the module (buffer) are run.
+
+                                                        *nose-:RunCase!*
+:RunCase!               Like |:RunCase| but will start an interactive shell
+                        instead of running in the background. This is useful
+                        for debugging your test or program (ex.: pdb or ipdb).
+
+                                                        *nose-:RunModule*
+:RunModule              Run all tests found in the current module (buffer).
+
+                                                        *nose-:RunModule!*
+:RunModule!             Like |:RunModule| but will start an interactive shell
+                        instead of running in the background. This is useful
+                        for debugging your test or program (ex.: pdb or ipdb).
+
+                                                        *nose-:RunAll*
+:RunModule              Run all tests found in the git repository of the
+                        edited buffer.
+
+                                                        *nose-:RunAll!*
+:RunAll!                Like |:RunAll| but will start an interactive shell
+                        instead of running in the background. This is useful
+                        for debugging your test or program (ex.: pdb or ipdb).
 
 License
 =======

@@ -11,6 +11,7 @@ This plugin improve on *Vim* compiler option by adding some features specific to
 
 - Configurable python virtual environment.
 - Isolate tests to be run. Run a specific test, a test case, a test module or run all tests (requires git).
+- Memorize last test ran. The last test will run when commands are executed in *non-test* modules.
 - Populate *Vim* quickfix window with failing tests and errors for easy navigation.
 
 Requirements

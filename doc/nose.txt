@@ -24,6 +24,8 @@ to nose:
         or current virtual environment.
     -   Isolate tests to be run. Run a specific test, a test case, a test
         module or all tests inside a git repository.
+    -   Memorize last test ran. The last test will run if commands are called
+        in `non-test` module.
     -   Improved vim *errorformat* detection. *quickfix* window will show the
         correct error lines (surprisingly, it was not intuitive as one would
         think to enable!)

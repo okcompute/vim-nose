@@ -4,6 +4,9 @@ Tools to parse Python code.
 
 # import os
 import ast
+import _ast
+
+from nose.config import Config
 
 
 def __get_line(node):
@@ -50,17 +53,83 @@ def __get_best_matching_chain(node, lineno):
     return result
 
 
-def get_complete_function_name_at(file_, position, limit=None):
+def __is_test_case(node):
+    """ Return `True` if the node match a test case.
     """
-    Get the dot-separated name of the function at the given `position` in the
-    specified `file_`.
+    # Note: `nose` own test pattern is used for consistency with the test
+    # runner (can be configured) instead of hard coding our own version.
+    nose_config = Config()
+
+    if type(node) is _ast.ClassDef:
+        bases = [base.attr for base in node.bases if hasattr(base, 'attr')]
+        if 'TestCase' in bases:
+            # inherits from unitttet.TestCase
+            return True
+        if nose_config.testMatch.match(node.name):
+            # Match nose `Test` pattern
+            return True
+    return False
+
+
+def __is_test_function(node):
+    """ Return `True` if the node match a test function.
+    """
+    # Note: `nose` own test pattern is used for consistency with the test
+    # runner (can be configured) instead of hard coding our own version.
+    nose_config = Config()
+
+    if type(node) is _ast.FunctionDef and \
+            nose_config.testMatch.match(node.name):
+        return True
+
+
+def get_ast_branch_at(file_, position):
+    """
+    Return the full abstract syntax tree branch up to the root for the requested
+    position inside the file.
     """
     module = ast.parse(open(file_).read())
-    chain = __get_best_matching_chain(module, position[0])
-    names = [node.name for node in chain[1:] if hasattr(node, 'name')]
+    return __get_best_matching_chain(module, position[0])
 
-    if limit is not None:
-        names = names[:limit]
 
-    if names:
-        return '.'.join(names)
+def get_test_case_at(file_, position):
+    """
+    Get the dotted separated name of a test class at give `position` in `file_`.
+    If no test case can be found, an empty string is returned.
+    """
+    branch = get_ast_branch_at(file_, position)
+
+    # Remove module name
+    chain = branch[1:]
+
+    # Traverse the chain to find the first node name matching a test case
+    # pattern.
+    for node in reversed(chain):
+        if __is_test_case(node):
+            break
+        chain.pop()
+
+    return ".".join([node.name for node in chain])
+
+
+def get_test_function_at(file_, position):
+    """
+    Get the dot-separated name of a test function at the given `position` in the
+    specified `file_`. Stops at the test case, if current position is not inside
+    a test function. Finally, returns empty string if position is not inside a
+    test case.
+    """
+    branch = get_ast_branch_at(file_, position)
+
+    # Remove module name
+    chain = branch[1:]
+
+    for node in reversed(chain):
+        if __is_test_function(node):
+            break
+        # The search stop at test case level if no function found
+        if __is_test_case(node):
+            break
+        chain.pop()
+
+    return ".".join([node.name for node in chain])

@@ -107,20 +107,14 @@ function! nose#git_repository_root()
     return l:root
 endfunction
 
-function! nose#get_current_test(...)
-    let l:limit=""
-    if a:0
-        let l:limit=a:1
-    endif
+function! nose#get_current_test_function()
 python << EOF
 import code_analyzer
 import vim
 position = vim.current.window.cursor
 filename  = vim.current.buffer.name
-limit = vim.eval("l:limit")
-limit = int(limit) if limit else None
 try:
-    test_function = code_analyzer.get_complete_function_name_at(filename, position, limit)
+    test_function = code_analyzer.get_test_function_at(filename, position)
 except:
     # No function found because there is an error in the parsed file. Let nose
     # found the error too and show it in the quickfix window.
@@ -135,6 +129,27 @@ EOF
     return l:test
 endfunction
 
+function! nose#get_current_test_case()
+python << EOF
+import code_analyzer
+import vim
+position = vim.current.window.cursor
+filename  = vim.current.buffer.name
+try:
+    test_case = code_analyzer.get_test_case_at(filename, position)
+except:
+    # No test case found because there is an error in the parsed file. Let
+    nose # found the error too and show it in the quickfix window.
+    test_case = ""
+test = filename
+if test_case:
+    test = test + ":" + test_case
+# Always use Posix path (even on Windows)
+test = test.replace("\\", "/")
+vim.command("let l:test=\"%s\"" % test)
+EOF
+    return l:test
+endfunction
 function! nose#get_current_module()
     return expand("%:p")
 endfunction
@@ -167,17 +182,16 @@ endfunction
 function! nose#run_test(bang) abort
     let old_path = nose#prepare_virtualenv()
     try
-        call nose#run(a:bang, nose#get_current_test())
+        call nose#run(a:bang, nose#get_current_test_function())
     finally
         call nose#reset_virtualenv(old_path)
     endtry
 endfunction
 
 function! nose#run_case(bang) abort
-    let level=1
     let old_path = nose#prepare_virtualenv()
     try
-        call nose#run(a:bang, nose#get_current_test(level))
+        call nose#run(a:bang, nose#get_current_test_case())
     finally
         call nose#reset_virtualenv(old_path)
     endtry

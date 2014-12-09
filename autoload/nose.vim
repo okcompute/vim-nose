@@ -119,6 +119,7 @@ except:
     # No function found because there is an error in the parsed file. Let nose
     # found the error too and show it in the quickfix window.
     test_function = ""
+# test is either a test function, a test case or a test module
 test = filename
 if test_function:
     test = test + ":" + test_function
@@ -126,7 +127,12 @@ if test_function:
 test = test.replace("\\", "/")
 vim.command("let l:test=\"%s\"" % test)
 EOF
+    let g:nose#last_test=l:test
     return l:test
+endfunction
+
+function! nose#get_last_test()
+    return g:nose#last_test
 endfunction
 
 function! nose#get_current_test_case()
@@ -141,17 +147,29 @@ except:
     # No test case found because there is an error in the parsed file. Let
     nose # found the error too and show it in the quickfix window.
     test_case = ""
-test = filename
 if test_case:
-    test = test + ":" + test_case
+    test_case = filename + ":" + test_case
+else:
+    test_case = filename
 # Always use Posix path (even on Windows)
-test = test.replace("\\", "/")
-vim.command("let l:test=\"%s\"" % test)
+test_case = test_case.replace("\\", "/")
+vim.command("let l:test_case=\"%s\"" % test_case)
 EOF
-    return l:test
+    let g:nose#last_test_case=l:test_case
+    return l:test_case
 endfunction
+
+function! nose#get_last_test_case()
+    return g:nose#last_test_case
+endfunction
+
 function! nose#get_current_module()
-    return expand("%:p")
+    let g:nose#last_test_module=expand("%:p")
+    return g:nose#last_test_module
+endfunction
+
+function! nose#get_last_test_module()
+    return g:nose#last_test_module
 endfunction
 
 function! nose#compute_interactive_command()
@@ -188,6 +206,15 @@ function! nose#run_test(bang) abort
     endtry
 endfunction
 
+function! nose#run_last_test(bang) abort
+    let old_path = nose#prepare_virtualenv()
+    try
+        call nose#run(a:bang, nose#get_last_test())
+    finally
+        call nose#reset_virtualenv(old_path)
+    endtry
+endfunction
+
 function! nose#run_case(bang) abort
     let old_path = nose#prepare_virtualenv()
     try
@@ -197,10 +224,28 @@ function! nose#run_case(bang) abort
     endtry
 endfunction
 
+function! nose#run_last_test_case(bang) abort
+    let old_path = nose#prepare_virtualenv()
+    try
+        call nose#run(a:bang, nose#get_last_test_case())
+    finally
+        call nose#reset_virtualenv(old_path)
+    endtry
+endfunction
+
 function! nose#run_module(bang) abort
     let old_path = nose#prepare_virtualenv()
     try
         call nose#run(a:bang, nose#get_current_module())
+    finally
+        call nose#reset_virtualenv(old_path)
+    endtry
+endfunction
+
+function! nose#run_last_test_module(bang) abort
+    let old_path = nose#prepare_virtualenv()
+    try
+        call nose#run(a:bang, nose#get_last_module())
     finally
         call nose#reset_virtualenv(old_path)
     endtry

@@ -75,8 +75,7 @@ EOF
 function! nose#read_virtualenv_config_from_git()
     let l:venv =  system('git config vim-nose.venv')
     if v:shell_error
-        throw "Configuration not found. Git not available or virtualenv \
-        configuration not set."
+        throw "Configuration not found. Git not available or virtualenv configuration not set."
     endif
     let l:root = nose#git_repository_root()
 python << EOF

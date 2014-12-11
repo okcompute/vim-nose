@@ -1,4 +1,6 @@
-" autoload/nose.vim
+" vim:fdm=marker
+"
+" Location: autoload/nose.vim
 " Author: Pascal Lalancette (okcompute@icloud.com)
 
 
@@ -6,6 +8,8 @@ if !has('python')
     echo "Error: Required vim compiled with +python"
     finish
 endif
+
+" VirtualEnv {{{1
 
 function! nose#prepare_virtualenv()
     let l:old_path = $PATH
@@ -41,6 +45,10 @@ function! nose#get_virtual_env_path()
     throw "No virtualenv configuration found"
 endfunction
 
+" }}}1
+
+" '.venv' config file {{{
+"
 function! nose#read_virtualenv_config_from_file()
     let venv_config = findfile(".venv", "./;")
     if !filereadable(venv_config)
@@ -72,12 +80,16 @@ EOF
     return l:path
     endfunction
 
+" }}}1
+
+" git {{{1
+
 function! nose#read_virtualenv_config_from_git()
     let l:venv =  system('git config vim-nose.venv')
     if v:shell_error
         throw "Configuration not found. Git not available or virtualenv configuration not set."
     endif
-    let l:root = nose#git_repository_root()
+    let l:root = nose#get_git_repository_root()
 python << EOF
 import vim
 import os
@@ -98,13 +110,17 @@ EOF
     return l:path
 endfunction
 
-function! nose#git_repository_root()
+function! nose#get_git_repository_root()
     let root =  system('git rev-parse --show-toplevel')
     if v:shell_error
         throw "Git not available for project root discovery!"
     endif
     return l:root
 endfunction
+
+" }}}1
+
+" Test finders {{{1
 
 function! nose#get_current_test_function()
 python << EOF
@@ -130,7 +146,7 @@ EOF
     return l:test
 endfunction
 
-function! nose#get_last_test()
+function! nose#get_last_test_function()
     return g:nose#last_test
 endfunction
 
@@ -171,7 +187,11 @@ function! nose#get_last_test_module()
     return g:nose#last_test_module
 endfunction
 
-function! nose#compute_interactive_command()
+" }}}1
+
+" Commands selection {{{1
+
+function! nose#make_interactive_command()
     let l:cmd = ":!"
     if exists(":Start")
         let l:cmd = ":Start "
@@ -181,82 +201,73 @@ function! nose#compute_interactive_command()
     return l:cmd."nosetests -s "
 endfunction
 
-function! nose#compute_command(interactive)
-    if a:interactive
-        return nose#compute_interactive_command()
-    elseif exists(":Make")
+function! nose#make_foreground_command()
+    if exists(":Make")
         return ":Make "
     else
         return ":make "
     endif
 endfunction
 
-function! nose#run(interactive, ...) abort
-    let l:cmd = nose#compute_command(a:interactive)
-    exec l:cmd.join(a:000)
-endfunction
+" }}}1
 
-function! nose#run_test(bang) abort
+" Generic run method {{{1
+
+function! nose#run(interactive, get_test_method) abort
     let old_path = nose#prepare_virtualenv()
     try
-        call nose#run(a:bang, nose#get_current_test_function())
+        if a:interactive
+            let l:cmd = nose#make_interactive_command()
+        else
+            let l:cmd = nose#make_foreground_command()
+        endif
+        let l:args = nose#get_{a:get_test_method}()
+        exec l:cmd.l:args
+    catch /^Git not available/
+        echo "vim-nose: Cannot run test command (".v:exception.")"
     finally
         call nose#reset_virtualenv(old_path)
     endtry
+endfunction
+
+"}}}1
+
+" Run commands implementations {{{1
+
+function! nose#run_test(bang) abort
+    call nose#run(a:bang, "current_test_function")
 endfunction
 
 function! nose#run_last_test(bang) abort
-    let old_path = nose#prepare_virtualenv()
-    try
-        call nose#run(a:bang, nose#get_last_test())
-    finally
-        call nose#reset_virtualenv(old_path)
-    endtry
+    call nose#run(a:bang, "last_test_function")
 endfunction
 
 function! nose#run_case(bang) abort
-    let old_path = nose#prepare_virtualenv()
-    try
-        call nose#run(a:bang, nose#get_current_test_case())
-    finally
-        call nose#reset_virtualenv(old_path)
-    endtry
+    call nose#run(a:bang, "current_test_case")
 endfunction
 
 function! nose#run_last_test_case(bang) abort
-    let old_path = nose#prepare_virtualenv()
-    try
-        call nose#run(a:bang, nose#get_last_test_case())
-    finally
-        call nose#reset_virtualenv(old_path)
-    endtry
+    call nose#run(a:bang, "last_test_case")
 endfunction
 
 function! nose#run_module(bang) abort
-    let old_path = nose#prepare_virtualenv()
-    try
-        call nose#run(a:bang, nose#get_current_module())
-    finally
-        call nose#reset_virtualenv(old_path)
-    endtry
+    call nose#run(a:bang, "current_module")
 endfunction
 
 function! nose#run_last_test_module(bang) abort
-    let old_path = nose#prepare_virtualenv()
-    try
-        call nose#run(a:bang, nose#get_last_module())
-    finally
-        call nose#reset_virtualenv(old_path)
-    endtry
+    call nose#run(a:bang, "last_module")
 endfunction
 
 function! nose#run_all(bang) abort
-    let old_path = nose#prepare_virtualenv()
-    try
-        call nose#run(a:bang, nose#git_repository_root())
-    catch /^Git not available/
-        echo "Cannot run all tests: ".v:exception
-    finally
-        call nose#reset_virtualenv(old_path)
-    endtry
+    call nose#run(a:bang, "git_repository_root")
+    " let old_path = nose#prepare_virtualenv()
+    " try
+    "     call nose#run(a:bang, "git_repository_root")
+    " catch /^Git not available/
+    "     echo "Cannot run all tests: ".v:exception
+    " finally
+    "     call nose#reset_virtualenv(old_path)
+    " endtry
 endfunction
+
+" }}}1

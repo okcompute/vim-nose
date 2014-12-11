@@ -120,7 +120,7 @@ endfunction
 
 " }}}1
 
-" Test finders {{{1
+" Test finder functions {{{1
 
 function! nose#get_current_test_function()
 python << EOF
@@ -150,6 +150,10 @@ function! nose#get_last_test_function()
     return g:nose#last_test
 endfunction
 
+" }}}1
+
+" Test case finder functions {{{1
+
 function! nose#get_current_test_case()
 python << EOF
 import code_analyzer
@@ -177,6 +181,10 @@ endfunction
 function! nose#get_last_test_case()
     return g:nose#last_test_case
 endfunction
+
+" }}}
+
+" Test module finder functions {{{1
 
 function! nose#get_current_module()
     let g:nose#last_test_module=expand("%:p")
@@ -260,14 +268,6 @@ endfunction
 
 function! nose#run_all(bang) abort
     call nose#run(a:bang, "git_repository_root")
-    " let old_path = nose#prepare_virtualenv()
-    " try
-    "     call nose#run(a:bang, "git_repository_root")
-    " catch /^Git not available/
-    "     echo "Cannot run all tests: ".v:exception
-    " finally
-    "     call nose#reset_virtualenv(old_path)
-    " endtry
 endfunction
 
 " }}}1

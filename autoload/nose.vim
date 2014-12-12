@@ -141,7 +141,7 @@ endfunction
 
 " Test finder functions {{{1
 
-function! nose#get_current_test_function()
+function! nose#get_current_test()
 python << EOF
 import code_analyzer
 import vim
@@ -165,7 +165,7 @@ EOF
     return l:test
 endfunction
 
-function! nose#get_last_test_function()
+function! nose#get_last_test()
     return g:nose#last_test
 endfunction
 
@@ -193,12 +193,12 @@ else:
 test_case = test_case.replace("\\", "/")
 vim.command("let l:test_case=\"%s\"" % test_case)
 EOF
-    let g:nose#last_test_case=l:test_case
+    let g:nose#last_case=l:test_case
     return l:test_case
 endfunction
 
-function! nose#get_last_test_case()
-    return g:nose#last_test_case
+function! nose#get_last_case()
+    return g:nose#last_case
 endfunction
 
 " }}}
@@ -206,12 +206,12 @@ endfunction
 " Test module finder functions {{{1
 
 function! nose#get_current_module()
-    let g:nose#last_test_module=expand("%:p")
-    return g:nose#last_test_module
+    let g:nose#last_module=expand("%:p")
+    return g:nose#last_module
 endfunction
 
-function! nose#get_last_test_module()
-    return g:nose#last_test_module
+function! nose#get_last_module()
+    return g:nose#lastmodule
 endfunction
 
 " }}}1
@@ -262,26 +262,26 @@ endfunction
 " Run commands implementations {{{1
 
 function! nose#run_test(bang) abort
-    call nose#run(a:bang, "current_test_function")
+    call nose#run(a:bang, "current_test")
 endfunction
 
 function! nose#run_last_test(bang) abort
-    call nose#run(a:bang, "last_test_function")
+    call nose#run(a:bang, "last_test")
 endfunction
 
 function! nose#run_case(bang) abort
-    call nose#run(a:bang, "current_test_case")
+    call nose#run(a:bang, "current_case")
 endfunction
 
-function! nose#run_last_test_case(bang) abort
-    call nose#run(a:bang, "last_test_case")
+function! nose#run_last_case(bang) abort
+    call nose#run(a:bang, "last_case")
 endfunction
 
 function! nose#run_module(bang) abort
     call nose#run(a:bang, "current_module")
 endfunction
 
-function! nose#run_last_test_module(bang) abort
+function! nose#run_last_module(bang) abort
     call nose#run(a:bang, "last_module")
 endfunction
 

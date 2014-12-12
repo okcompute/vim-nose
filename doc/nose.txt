@@ -1,6 +1,6 @@
 *nose.txt*	 For Vim version 7.4	 Last change: 2010 December 4
 
-*nose.txt*  An improved vim compiler for nose python tests runner (
+An improved vim compiler for nose python tests runner (
 
 Author:  Pascal Lalancette <okcompute@icloud.com>
 License: Same terms as Vim itself (see |license|)

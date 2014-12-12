@@ -9,6 +9,25 @@ if !has('python')
     finish
 endif
 
+
+" Configure python environment {{{1
+let s:script_folder_path = escape( expand( '<sfile>:p:h' ), '\' )
+
+function! s:setup_python() abort
+python << EOF
+import os
+import sys
+import vim
+script_path = vim.eval("s:script_folder_path")
+script_path = os.path.normpath(os.path.join(script_path, "../python2"))
+sys.path.insert( 0, script_path)
+EOF
+endfunction
+
+call s:setup_python()
+
+" }}}1
+
 " VirtualEnv {{{1
 
 function! nose#prepare_virtualenv()

@@ -5,8 +5,12 @@ Tools to parse Python code.
 # import os
 import ast
 import _ast
+import re
+import os
 
-from nose.config import Config
+
+# Shamelessly copied from nose.
+testMatch = re.compile(r'(?:^|[\\b_\\.%s-])[Tt]est' % os.sep)
 
 
 def __get_line(node):
@@ -56,16 +60,12 @@ def __get_best_matching_chain(node, lineno):
 def __is_test_case(node):
     """ Return `True` if the node match a test case.
     """
-    # Note: `nose` own test pattern is used for consistency with the test
-    # runner (can be configured) instead of hard coding our own version.
-    nose_config = Config()
-
     if type(node) is _ast.ClassDef:
         bases = [base.attr for base in node.bases if hasattr(base, 'attr')]
         if 'TestCase' in bases:
             # inherits from unitttet.TestCase
             return True
-        if nose_config.testMatch.match(node.name):
+        if testMatch.match(node.name):
             # Match nose `Test` pattern
             return True
     return False
@@ -74,12 +74,8 @@ def __is_test_case(node):
 def __is_test_function(node):
     """ Return `True` if the node match a test function.
     """
-    # Note: `nose` own test pattern is used for consistency with the test
-    # runner (can be configured) instead of hard coding our own version.
-    nose_config = Config()
-
     if type(node) is _ast.FunctionDef and \
-            nose_config.testMatch.match(node.name):
+            testMatch.match(node.name):
         return True
 
 

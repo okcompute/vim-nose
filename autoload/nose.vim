@@ -9,7 +9,6 @@ if !has('python')
     finish
 endif
 
-
 " Configure python environment {{{1
 let s:script_folder_path = escape( expand( '<sfile>:p:h' ), '\' )
 
@@ -173,7 +172,7 @@ endfunction
 
 " Test case finder functions {{{1
 
-function! nose#get_current_test_case()
+function! nose#get_current_case()
 python << EOF
 import code_analyzer
 import vim
@@ -211,7 +210,7 @@ function! nose#get_current_module()
 endfunction
 
 function! nose#get_last_module()
-    return g:nose#lastmodule
+    return g:nose#last_module
 endfunction
 
 " }}}1
@@ -250,6 +249,8 @@ function! nose#run(interactive, get_test_method) abort
         endif
         let l:args = nose#get_{a:get_test_method}()
         exec l:cmd.l:args
+    catch /^Vim\%((\a\+)\)\=:E121/	" catch error E121
+        echo "vim-nose: No previous run test history."
     catch /^Git not available/
         echo "vim-nose: Cannot run test command (".v:exception.")"
     finally

@@ -126,6 +126,17 @@ These commands are available only for *python* file type buffers.
                         instead of running in the background. This is useful
                         for debugging your test or program (ex.: pdb or ipdb).
 
+==============================================================================
+RUNNING LAST TEST                                       *nose-last-test*
+
+The plugin will *memorize* the last test, case or module used for these three commands:
+
+    |:RunTest|
+    |:RunCase|
+    |:RunModule|
+
+If any of these commands are called outside of a python test module (any python module name not starting with "test_...") the last test, case or module will be used. This is really useful for example when doing TDD. You write the test. Call `:RunTest`. It fails. Switch focus to source module. Add code. Call `:RunTest`. etc.
+
 
 ==============================================================================
 ABOUT                                                   *nose-about*

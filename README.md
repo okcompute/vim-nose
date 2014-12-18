@@ -58,6 +58,16 @@ Run all tests found in the current module (buffer).
 
 Run all tests found in the git repository of the edited buffer.
 
+### Running last test
+
+The plugin will *memorize* the last test, case or module used for these three commands:
+
+    :RunTest
+    :RunCase
+    :RunModule
+
+If any of these commands are called outside of a python test module (any python module name not starting with "test_...") the last test, case or module will be used. This is really useful for example when doing TDD. You write the test. Call `:RunTest`. It fails. Switch focus to source module. Add code. Call `:RunTest`. etc.
+
 ### Interactive commands
 
 All **:Run...** command can also be launched in interactive mode. This will run tests synchronously in an external console (if possible). This is useful for debugging your program or tests. For instance, using `ipdb` inside *gVim* or *MacVim* basic shell does not support coloring! This is an attempt to fix this problem.

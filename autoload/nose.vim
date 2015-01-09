@@ -129,7 +129,7 @@ EOF
 endfunction
 
 function! nose#get_git_repository_root()
-    let root =  system('git rev-parse --show-toplevel')
+    let root =  substitute(system('git rev-parse --show-toplevel'), "\n", "", "")
     if v:shell_error
         throw "Git not available for project root discovery!"
     endif

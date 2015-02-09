@@ -242,12 +242,20 @@ endfunction
 function! nose#run(interactive, get_test_method) abort
     let old_path = nose#prepare_virtualenv()
     try
+        let l:args = nose#get_{a:get_test_method}()
         if a:interactive
             let l:cmd = nose#make_interactive_command()
+            " In case of test error, introduce a pause in the interactive
+            " shell so the user can see what the error was!
+            if has('win32')
+                let l:args = l:args." || pause"
+            else
+                let l:msg = "\"Press any key to continue...\""
+                let l:args = l:args." || read -p ".l:msg
+            endif
         else
             let l:cmd = nose#make_foreground_command()
         endif
-        let l:args = nose#get_{a:get_test_method}()
         exec l:cmd.l:args
     catch /^Vim\%((\a\+)\)\=:E121/	" catch error E121
         echo "vim-nose: No previous run test history."

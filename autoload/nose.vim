@@ -9,7 +9,7 @@ if !has('python')
     finish
 endif
 
-" Configure python environment {{{1
+" Configure python environment {{{
 let s:script_folder_path = escape( expand( '<sfile>:p:h' ), '\' )
 
 function! s:setup_python() abort
@@ -25,9 +25,9 @@ endfunction
 
 call s:setup_python()
 
-" }}}1
+" }}}
 
-" VirtualEnv {{{1
+" VirtualEnv {{{
 
 function! nose#prepare_virtualenv()
     let l:old_path = $PATH
@@ -63,7 +63,7 @@ function! nose#get_virtual_env_path()
     throw "No virtualenv configuration found"
 endfunction
 
-" }}}1
+" }}}
 
 " '.venv' config file {{{
 "
@@ -98,9 +98,9 @@ EOF
     return l:path
     endfunction
 
-" }}}1
+" }}}
 
-" git {{{1
+" git {{{
 
 function! nose#read_virtualenv_config_from_git()
     let l:venv =  system('git config vim-nose.venv')
@@ -136,9 +136,9 @@ function! nose#get_git_repository_root()
     return l:root
 endfunction
 
-" }}}1
+" }}}
 
-" Test finder functions {{{1
+" Test finder functions {{{
 
 function! nose#get_current_test()
 python << EOF
@@ -168,9 +168,9 @@ function! nose#get_last_test()
     return g:nose#last_test
 endfunction
 
-" }}}1
+" }}}
 
-" Test case finder functions {{{1
+" Test case finder functions {{{
 
 function! nose#get_current_case()
 python << EOF
@@ -202,7 +202,7 @@ endfunction
 
 " }}}
 
-" Test module finder functions {{{1
+" Test module finder functions {{{
 
 function! nose#get_current_module()
     let g:nose#last_module=expand("%:p")
@@ -213,9 +213,9 @@ function! nose#get_last_module()
     return g:nose#last_module
 endfunction
 
-" }}}1
+" }}}
 
-" Commands selection {{{1
+" Commands selection {{{
 
 function! nose#make_interactive_command()
     let l:cmd = ":!"
@@ -235,9 +235,9 @@ function! nose#make_foreground_command()
     endif
 endfunction
 
-" }}}1
+" }}}
 
-" Generic run method {{{1
+" Generic run method {{{
 
 function! nose#run(interactive, get_test_method) abort
     let old_path = nose#prepare_virtualenv()
@@ -266,9 +266,9 @@ function! nose#run(interactive, get_test_method) abort
     endtry
 endfunction
 
-"}}}1
+"}}}
 
-" Run commands implementations {{{1
+" Run commands implementations {{{
 
 function! nose#run_test(bang) abort
     call nose#run(a:bang, "current_test")
@@ -298,4 +298,4 @@ function! nose#run_all(bang) abort
     call nose#run(a:bang, "git_repository_root")
 endfunction
 
-" }}}1
+" }}}

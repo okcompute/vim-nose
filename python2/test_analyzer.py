@@ -55,6 +55,15 @@ class TestCodeAnalyzer(unittest.TestCase):
         result = code_analyzer.get_test_function_at(self.source, (12, 0))
         self.assertEqual(result, "")
 
+    def test_get_test_function_at_test_case_level(self):
+        """ Test when cursor position is located inside a test case but outside
+        a test function. """
+        result = code_analyzer.get_test_function_at(self.source, (17, 0))
+        self.assertEqual(result, "")
+
+        result = code_analyzer.get_test_function_at(self.source, (20, 0))
+        self.assertEqual(result, "")
+
     def test_get_test_case_at_on_definition(self):
         """ Test lookup for test case name when the line number is set on the
         case definition. """

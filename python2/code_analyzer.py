@@ -125,7 +125,7 @@ def get_test_function_at(file_, position):
             break
         # The search stop at test case level if no function found
         if __is_test_case(node):
-            break
+            return ""
         chain.pop()
 
     return ".".join([node.name for node in chain])

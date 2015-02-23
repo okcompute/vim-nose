@@ -1,4 +1,4 @@
-*nose.txt*	 For Vim version 7.4	 Last change: 2010 December 4
+*nose.txt*	 For Vim version 7.4	 Last change: 2014 December 4th
 
 An improved vim compiler for nose python tests runner (
 

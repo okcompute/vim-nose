@@ -12,7 +12,7 @@ class TestErrorFormat(unittest.TestCase):
 
     def test_output(self):
         """ Test the last line beginning with "  File..." gets marked by the
-        "=>" character sequence. """
+        "*" character sequence. """
         errors = [
             'E',
             '======================================================================',

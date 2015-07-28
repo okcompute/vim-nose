@@ -83,15 +83,22 @@ def get_ast_branch_at(file_, position):
     """
     Return the full abstract syntax tree branch up to the root for the requested
     position inside the file.
+
+    :param file_: Filename path.
+    :param position: Cursor position. (line,column) tuple.
     """
     module = ast.parse(open(file_).read())
     return __get_best_matching_chain(module, position[0])
 
 
-def get_test_case_at(file_, position):
+def get_test_case_at(file_, position, separator="."):
     """
     Get the dotted separated name of a test class at give `position` in `file_`.
     If no test case can be found, an empty string is returned.
+
+    :param file_: Filename path.
+    :param position: Cursor position. (line,column) tuple.
+    :param separator: String separator to inject between scope.
     """
     branch = get_ast_branch_at(file_, position)
 
@@ -105,15 +112,19 @@ def get_test_case_at(file_, position):
             break
         chain.pop()
 
-    return ".".join([node.name for node in chain])
+    return separator.join([node.name for node in chain])
 
 
-def get_test_function_at(file_, position):
+def get_test_function_at(file_, position, separator="."):
     """
     Get the dot-separated name of a test function at the given `position` in the
     specified `file_`. Stops at the test case, if current position is not inside
     a test function. Finally, returns empty string if position is not inside a
     test case.
+
+    :param file_: Filename path.
+    :param position: Cursor position. (line,column) tuple.
+    :param separator: String separator to inject between scope.
     """
     branch = get_ast_branch_at(file_, position)
 
@@ -128,4 +139,4 @@ def get_test_function_at(file_, position):
             return ""
         chain.pop()
 
-    return ".".join([node.name for node in chain])
+    return separator.join([node.name for node in chain])

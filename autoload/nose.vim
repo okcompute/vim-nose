@@ -146,20 +146,32 @@ import code_analyzer
 import vim
 position = vim.current.window.cursor
 filename  = vim.current.buffer.name
+runner = vim.eval("g:vim_python_runner")
+separator = "::" if runner == 'pytest' else "."
 try:
-    test_function = code_analyzer.get_test_function_at(filename, position)
+    test_function = code_analyzer.get_test_function_at(
+        filename,
+        position,
+        separator,
+    )
 except:
     # No function found because there is an error in the parsed file. Let nose
     # found the error too and show it in the quickfix window.
     test_function = ""
+    print "This did not work!"
+    import sys
+    print sys.exc_info()
+print test_function
 # test is either a test function, a test case or a test module
 test = filename
 if test_function:
-    test = test + ":" + test_function
+    separator = "::" if runner == 'pytest' else ":"
+    test = separator.join([test, test_function])
 # Always use Posix path (even on Windows)
 test = test.replace("\\", "/")
 vim.command("let l:test=\"%s\"" % test)
 EOF
+    echo l:test
     let g:nose#last_test=l:test
     return l:test
 endfunction
@@ -178,14 +190,21 @@ import code_analyzer
 import vim
 position = vim.current.window.cursor
 filename  = vim.current.buffer.name
+runner = vim.eval("g:vim_python_runner")
+separator = "::" if runner == 'pytest' else "."
 try:
-    test_case = code_analyzer.get_test_case_at(filename, position)
+    test_case = code_analyzer.get_test_case_at(
+        filename,
+        position,
+        separator,
+    )
 except:
     # No test case found because there is an error in the parsed file. Let
     nose # found the error too and show it in the quickfix window.
     test_case = ""
 if test_case:
-    test_case = filename + ":" + test_case
+    separator = "::" if runner == 'pytest' else ":"
+    test_case = separator.join([filename, test_case])
 else:
     test_case = filename
 # Always use Posix path (even on Windows)

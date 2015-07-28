@@ -24,6 +24,16 @@ class TestCodeAnalyzer(unittest.TestCase):
         result = code_analyzer.get_test_function_at(self.source, (25, 0))
         self.assertEqual(result, "MyTestClass.test_function_1")
 
+    def test_get_test_function_with_separator(self):
+        """ Test lookup for function name when the line number is set on the
+        function definition. """
+        result = code_analyzer.get_test_function_at(
+            self.source,
+            (25, 0),
+            ":",
+        )
+        self.assertEqual(result, "MyTestClass:test_function_1")
+
     def test_get_test_function_at_on_module_last_line(self):
         """ Test lookup for function name when the line number is set to the
         module last line. """

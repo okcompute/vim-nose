@@ -1,0 +1,167 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+import unittest
+
+from output_parser.pytest import (
+    parse_error,
+    parse_error_or_failure,
+    parse_filename_and_line_no,
+    parse,
+)
+
+
+class TestErrorFormat(unittest.TestCase):
+
+    """Test case for errorformat.py module"""
+
+    def test_parse_pytest_error(self):
+        input = "E   NameError: name 'asdfasdf' is not defined"
+        expected = "NameError: name 'asdfasdf' is not defined"
+        result = parse_error(input)
+        self.assertEqual(expected, result)
+
+    def test_parse_pytest_error_when_no_match(self):
+        input = "application/tests/test_dal.py:19: in <module>"
+        result = parse_error(input)
+        self.assertIsNone(result)
+
+    def test_parse_pytest_filename_and_line_no(self):
+        input = "application/tests/test_dal.py:19: in <module>"
+        expected = "application/tests/test_dal.py:19"
+        result = parse_filename_and_line_no(input)
+        self.assertEqual(expected, result)
+
+    def test_parse_pytest_filename_and_line_no_when_no_match(self):
+        input = "Traceback (most recent call last):"
+        result = parse_filename_and_line_no(input)
+        self.assertIsNone(result)
+
+    def test_parse_error_or_failure_with_repeated_filenames(self):
+        input = [
+            "self = <application.tests.test_authentication.TestAuthentication testMethod=test_false>",
+            "",
+            "    def setUp(self):",
+            ">       super(TestAuthentication, self).setUp()",
+            "",
+            "application/tests/test_authentication.py:56:",
+            "_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _",
+            "application/tests/__init__.py:46: in setUp",
+            "    self.user = self.create_user(\"test\", \"test\", \"test@test.com\")",
+            "application/tests/__init__.py:96: in create_user",
+            "    self.assertEqual(response.code, 200)",
+            "E   AssertionError: 500 != 200",
+        ]
+        expected = input + ["application/tests/__init__.py:96 <AssertionError: 500 != 200>"]
+        result = parse_error_or_failure(iter(input))
+        self.assertEqual(expected, result)
+
+    def test_parse(self):
+        input = [
+            "===================================================================================== ERRORS =====================================================================================",
+            "__________________________________________________________________ ERROR collecting application/tests/test_dal.py ___________________________________________________________________",
+            "application/tests/test_dal.py:19: in <module>",
+            "    asdfasdf",
+            "E   NameError: name 'asdfasdf' is not defined",
+            "==================================================================================== FAILURES ====================================================================================",
+            "_________________________________________________________________________ TestAuthentication.test_false __________________________________________________________________________",
+            "",
+            "self = <application.tests.test_authentication.TestAuthentication testMethod=test_false>",
+            "",
+            "    def setUp(self):",
+            ">       super(TestAuthentication, self).setUp()",
+            "",
+            "application/tests/test_authentication.py:56:",
+            "_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _",
+            "application/tests/__init__.py:46: in setUp",
+            "    self.user = self.create_user(\"test\", \"test\", \"test@test.com\")",
+            "application/tests/__init__.py:96: in create_user",
+            "    self.assertEqual(response.code, 200)",
+            "E   AssertionError: 500 != 200",
+            "------------------------------------------------------------------------------ Captured stderr call ------------------------------------------------------------------------------",
+            "ERROR:tornado.application:Uncaught exception POST /api/signup (127.0.0.1)",
+            "HTTPServerRequest(protocol='http', host='localhost:55219', method='POST', uri='/api/signup', version='HTTP/1.1', remote_ip='127.0.0.1', headers={'Connection': 'close', 'Content-Type': 'application/json charset=utf-8', 'Host': 'localhost:55219', 'Content-Length': '66', 'Accept-Encoding': 'gzip'})",
+            "Traceback (most recent call last):",
+            "  File \"/Git/Backend/venv/lib/python3.4/site-packages/tornado/web.py\", line 1332, in _execute",
+            "    result = method(*self.path_args, **self.path_kwargs)",
+            "  File \"/Git/Backend/application/rest/__init__.py\", line 135, in wrapper",
+            "    return method(self, *args, **kwargs)",
+            "  File \"/Git/Backend/application/rest/__init__.py\", line 105, in request_wrapper",
+            "    response = request(self, arguments, *args, **kwargs)",
+            "  File \"/Git/Backend/application/rest/authentication.py\", line 105, in post",
+            "    body['email']",
+            "  File \"/Git/Backend/application/dal.py\", line 257, in create_user",
+            "    return self._convert_to_user(user)",
+            "  File \"/Git/Backend/application/dal.py\", line 236, in _convert_to_user",
+            "    blarg",
+            "NameError: name 'blarg' is not defined",
+            "ERROR:tornado.access:500 POST /api/signup (127.0.0.1) 4.70ms",
+        ]
+        expected = [
+            "===================================================================================== ERRORS =====================================================================================",
+            "__________________________________________________________________ ERROR collecting application/tests/test_dal.py ___________________________________________________________________",
+            "application/tests/test_dal.py:19: in <module>",
+            "    asdfasdf",
+            "E   NameError: name 'asdfasdf' is not defined",
+            "application/tests/test_dal.py:19 <NameError: name 'asdfasdf' is not defined>",
+            "==================================================================================== FAILURES ====================================================================================",
+            "_________________________________________________________________________ TestAuthentication.test_false __________________________________________________________________________",
+            "",
+            "self = <application.tests.test_authentication.TestAuthentication testMethod=test_false>",
+            "",
+            "    def setUp(self):",
+            ">       super(TestAuthentication, self).setUp()",
+            "",
+            "application/tests/test_authentication.py:56:",
+            "_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _",
+            "application/tests/__init__.py:46: in setUp",
+            "    self.user = self.create_user(\"test\", \"test\", \"test@test.com\")",
+            "application/tests/__init__.py:96: in create_user",
+            "    self.assertEqual(response.code, 200)",
+            "E   AssertionError: 500 != 200",
+            "application/tests/__init__.py:96 <AssertionError: 500 != 200>",
+            "------------------------------------------------------------------------------ Captured stderr call ------------------------------------------------------------------------------",
+            "ERROR:tornado.application:Uncaught exception POST /api/signup (127.0.0.1)",
+            "HTTPServerRequest(protocol='http', host='localhost:55219', method='POST', uri='/api/signup', version='HTTP/1.1', remote_ip='127.0.0.1', headers={'Connection': 'close', 'Content-Type': 'application/json charset=utf-8', 'Host': 'localhost:55219', 'Content-Length': '66', 'Accept-Encoding': 'gzip'})",
+            "Traceback (most recent call last):",
+            "  File \"/Git/Backend/venv/lib/python3.4/site-packages/tornado/web.py\", line 1332, in _execute",
+            "    result = method(*self.path_args, **self.path_kwargs)",
+            "  File \"/Git/Backend/application/rest/__init__.py\", line 135, in wrapper",
+            "    return method(self, *args, **kwargs)",
+            "  File \"/Git/Backend/application/rest/__init__.py\", line 105, in request_wrapper",
+            "    response = request(self, arguments, *args, **kwargs)",
+            "  File \"/Git/Backend/application/rest/authentication.py\", line 105, in post",
+            "    body['email']",
+            "  File \"/Git/Backend/application/dal.py\", line 257, in create_user",
+            "    return self._convert_to_user(user)",
+            "  File \"/Git/Backend/application/dal.py\", line 236, in _convert_to_user",
+            "    blarg",
+            "NameError: name 'blarg' is not defined",
+            "/Git/Backend/application/dal.py:236 <NameError: name 'blarg' is not defined>",
+            "ERROR:tornado.access:500 POST /api/signup (127.0.0.1) 4.70ms",
+        ]
+        result = parse(input)
+        self.assertEqual(expected, result)
+
+    def test_parse_with_module_function(self):
+        input = [
+            "=================================== FAILURES ===================================",
+            "_________________________________ test_myfunc __________________________________",
+            "okbudget/tests/test_authentication.py:283: in test_myfunc",
+            "assert False",
+            "E   assert False",
+            "None <assert False>",
+            "=========================== 1 failed in 0.21 seconds ===========================",
+        ]
+        expected = [
+            "=================================== FAILURES ===================================",
+            "_________________________________ test_myfunc __________________________________",
+            "okbudget/tests/test_authentication.py:283: in test_myfunc",
+            "assert False",
+            "E   assert False",
+            "okbudget/tests/test_authentication.py:283 <assert False>",
+            "None <assert False>",
+            "=========================== 1 failed in 0.21 seconds ===========================",
+        ]
+        result = parse(input)
+        self.assertEqual(expected, result)

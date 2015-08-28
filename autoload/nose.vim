@@ -243,7 +243,17 @@ function! nose#make_interactive_command()
     elseif has('win32')
         let l:cmd = ":!start "
     endif
-    return l:cmd."nosetests -s "
+    if g:vim_python_runner == 'nose'
+        return l:cmd."nosetests -s "
+    elseif g:vim_python_runner == 'pytest'
+        if has('win32') || has('win64')
+            return l:cmd."py.test.exe -s "
+        else
+            return l:cmd."py.test -s "
+        endif
+    else
+        echoerr "Unknown test runner!: ".g:vim_python_runner
+    endif
 endfunction
 
 function! nose#make_foreground_command()

@@ -16,19 +16,15 @@ from .python import parse_traceback
 
 def parse(lines):
     """
-    Parse a list of lines from nose output.  Mark the last item of a
-    traceback sequence with `*`.
+    Parse a list of lines from nose output.
 
     :param lines: list of nose error output lines.
 
+    :returns: nose output augmented with specially formatted lines adapted to
+        this plugin errorformat which will populate Vim clist.
     """
     results = []
     lines = iter(lines)
-
-    # 1. Extract 'ERROR collecting', 'failures' and 'captured stderr call'.
-    # 2. for each parse filename and error
-    # 2. for each case, insert the new formatted line and error message below
-    # the error string.
 
     failure = re.compile(r"^=*$")
 

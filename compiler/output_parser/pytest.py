@@ -12,6 +12,8 @@ from __future__ import print_function
 
 import re
 
+from .python import parse_traceback
+
 
 def parse_error(line):
     """
@@ -27,6 +29,28 @@ def parse_error(line):
     if not m:
         return None
     return '{}'.format(m.group('error'))
+
+
+def parse_conftest_error(line):
+    """
+    Find and extract `ConftestImportFailure` error message.
+
+    :param line: A string to pattern match against.
+
+    :returns: If found, the error as a string extracted from the lines.
+        Otherwise, `None`.
+    """
+    error_pattern = re.compile(
+        r"^E\s+_pytest.config.ConftestImportFailure: "
+        "\(local\('(?P<filename>.*)'\).*ImportError\(\"(?P<error>.*)\",\).*$",
+    )
+    m = error_pattern.match(line)
+    if not m:
+        return None
+    return '{filename}:1 <{error}>'.format(
+        filename=m.group('filename'),
+        error=m.group('error'),
+    )
 
 
 def parse_filename_and_line_no(line):
@@ -104,6 +128,10 @@ def parse_error_or_failure(lines):
 
     for line in lines:
         result.append(line)
+        error = parse_conftest_error(line)
+        if error:
+            result.append(error)
+            break
         error = parse_error(line)
         if error:
             result.append(
@@ -120,15 +148,53 @@ def parse_error_or_failure(lines):
     return result
 
 
+def parse_session_failure(lines):
+    """
+    Parse the output when pytest failed to start a session. One or more
+    traceback block are displayed. Last traceback error is formatted to the
+    plugin errorformat.
+
+    :param lines: list of pytest error output lines.
+
+    :returns: pytest output augmented with specially formatted lines adapted to
+        this plugin errorformat which will populate Vim clist.
+    """
+    results = []
+    last_traceback = []
+    lines = reversed(lines)
+
+    # Skip trailing empty lines
+    for line in lines:
+        if line != "":
+            break
+
+    # Capture last traceback block
+    for line in lines:
+        if line == "":
+            break
+        last_traceback.append(line)
+
+    for line in reversed(last_traceback):
+        results.extend(
+            parse_traceback(lines),
+        )
+    return results
+
+
 def parse(lines):
     """
     Parse a list of lines from nose output.  Mark the last item of a
     traceback sequence with `*`.
 
-    :param lines: list of nose error output lines.
+    :param lines: list of pytest error output lines.
 
+    :returns: pytest output augmented with specially formatted lines adapted to
+        this plugin errorformat which will populate Vim clist.
     """
     results = []
+    if not re.match(r"=* test session starts =*", lines[0]):
+        return parse_session_failure(lines)
+
     lines = iter(lines)
 
     error = re.compile(r"_* ERROR collecting .* _*")

@@ -5,6 +5,7 @@ import unittest
 
 from output_parser.pytest import (
     parse_error,
+    parse_conftest_error,
     parse_error_or_failure,
     parse_filename_and_line_no,
     parse,
@@ -20,6 +21,12 @@ class TestErrorFormat(unittest.TestCase):
         expected = "NameError: name 'asdfasdf' is not defined"
         result = parse_error(input)
         self.assertEqual(expected, result)
+
+    def test_parse_conftest_error(self):
+        input = "E   _pytest.config.ConftestImportFailure: (local('/test/conftest.py'), (<class 'ImportError'>, ImportError(\"No module named 'unknown'\",), <traceback object at 0x104226f88>))"
+        expected = "/test/conftest.py:1 <No module named 'unknown'>"
+        result = parse_conftest_error(input)
+        self.assertEqual(result, expected)
 
     def test_parse_pytest_error_when_no_match(self):
         input = "application/tests/test_dal.py:19: in <module>"
@@ -58,6 +65,7 @@ class TestErrorFormat(unittest.TestCase):
 
     def test_parse(self):
         input = [
+            "============================================================================== test session starts ===============================================================================",
             "===================================================================================== ERRORS =====================================================================================",
             "__________________________________________________________________ ERROR collecting application/tests/test_dal.py ___________________________________________________________________",
             "application/tests/test_dal.py:19: in <module>",
@@ -98,6 +106,7 @@ class TestErrorFormat(unittest.TestCase):
             "ERROR:tornado.access:500 POST /api/signup (127.0.0.1) 4.70ms",
         ]
         expected = [
+            "============================================================================== test session starts ===============================================================================",
             "===================================================================================== ERRORS =====================================================================================",
             "__________________________________________________________________ ERROR collecting application/tests/test_dal.py ___________________________________________________________________",
             "application/tests/test_dal.py:19: in <module>",
@@ -141,10 +150,12 @@ class TestErrorFormat(unittest.TestCase):
             "ERROR:tornado.access:500 POST /api/signup (127.0.0.1) 4.70ms",
         ]
         result = parse(input)
+        self.maxDiff = None
         self.assertEqual(expected, result)
 
     def test_parse_with_module_function(self):
         input = [
+            "============================================================================== test session starts ===============================================================================",
             "=================================== FAILURES ===================================",
             "_________________________________ test_myfunc __________________________________",
             "okbudget/tests/test_authentication.py:283: in test_myfunc",
@@ -154,6 +165,7 @@ class TestErrorFormat(unittest.TestCase):
             "=========================== 1 failed in 0.21 seconds ===========================",
         ]
         expected = [
+            "============================================================================== test session starts ===============================================================================",
             "=================================== FAILURES ===================================",
             "_________________________________ test_myfunc __________________________________",
             "okbudget/tests/test_authentication.py:283: in test_myfunc",
@@ -163,5 +175,61 @@ class TestErrorFormat(unittest.TestCase):
             "None <assert False>",
             "=========================== 1 failed in 0.21 seconds ===========================",
         ]
+        result = parse(input)
+        self.assertEqual(expected, result)
+
+    def test_parse_with_conftest_error(self):
+        input = [
+            "============================================================================== test session starts ===============================================================================",
+            "===================================================================================== ERRORS =====================================================================================",
+            "_______________________________________________________________________________ ERROR collecting  ________________________________________________________________________________",
+            "venv/lib/python3.4/site-packages/py/_path/common.py:332: in visit",
+            "    for x in Visitor(fil, rec, ignore, bf, sort).gen(self):",
+            "venv/lib/python3.4/site-packages/py/_path/common.py:378: in gen",
+            "    for p in self.gen(subdir):",
+            "venv/lib/python3.4/site-packages/py/_path/common.py:367: in gen",
+            "    dirs = self.optsort([p for p in entries",
+            "venv/lib/python3.4/site-packages/py/_path/common.py:368: in <listcomp>",
+            "    if p.check(dir=1) and (rec is None or rec(p))])",
+            "venv/lib/python3.4/site-packages/_pytest/main.py:632: in _recurse",
+            "    ihook.pytest_collect_directory(path=path, parent=self)",
+            "venv/lib/python3.4/site-packages/_pytest/main.py:162: in __getattr__",
+            "    plugins = self.config._getmatchingplugins(self.fspath)",
+            "venv/lib/python3.4/site-packages/_pytest/config.py:692: in _getmatchingplugins",
+            "    self._conftest.getconftestmodules(fspath)",
+            "venv/lib/python3.4/site-packages/_pytest/config.py:521: in getconftestmodules",
+            "    mod = self.importconftest(conftestpath)",
+            "venv/lib/python3.4/site-packages/_pytest/config.py:545: in importconftest",
+            "    raise ConftestImportFailure(conftestpath, sys.exc_info())",
+            "E   _pytest.config.ConftestImportFailure: (local('/Users/okcompute/Developer/Git/OkBudgetBackend/okbudget/tests/conftest.py'), (<class 'ImportError'>, ImportError(\"No module named 'tata'\",), <traceback object at 0x104226f88>))",
+            "============================================================================ 1 error in 0.56 seconds =============================================================================",
+        ]
+        expected = [
+            "============================================================================== test session starts ===============================================================================",
+            "===================================================================================== ERRORS =====================================================================================",
+            "_______________________________________________________________________________ ERROR collecting  ________________________________________________________________________________",
+            "venv/lib/python3.4/site-packages/py/_path/common.py:332: in visit",
+            "    for x in Visitor(fil, rec, ignore, bf, sort).gen(self):",
+            "venv/lib/python3.4/site-packages/py/_path/common.py:378: in gen",
+            "    for p in self.gen(subdir):",
+            "venv/lib/python3.4/site-packages/py/_path/common.py:367: in gen",
+            "    dirs = self.optsort([p for p in entries",
+            "venv/lib/python3.4/site-packages/py/_path/common.py:368: in <listcomp>",
+            "    if p.check(dir=1) and (rec is None or rec(p))])",
+            "venv/lib/python3.4/site-packages/_pytest/main.py:632: in _recurse",
+            "    ihook.pytest_collect_directory(path=path, parent=self)",
+            "venv/lib/python3.4/site-packages/_pytest/main.py:162: in __getattr__",
+            "    plugins = self.config._getmatchingplugins(self.fspath)",
+            "venv/lib/python3.4/site-packages/_pytest/config.py:692: in _getmatchingplugins",
+            "    self._conftest.getconftestmodules(fspath)",
+            "venv/lib/python3.4/site-packages/_pytest/config.py:521: in getconftestmodules",
+            "    mod = self.importconftest(conftestpath)",
+            "venv/lib/python3.4/site-packages/_pytest/config.py:545: in importconftest",
+            "    raise ConftestImportFailure(conftestpath, sys.exc_info())",
+            "E   _pytest.config.ConftestImportFailure: (local('/Users/okcompute/Developer/Git/OkBudgetBackend/okbudget/tests/conftest.py'), (<class 'ImportError'>, ImportError(\"No module named 'tata'\",), <traceback object at 0x104226f88>))",
+            "/Users/okcompute/Developer/Git/OkBudgetBackend/okbudget/tests/conftest.py:1 <No module named 'tata'>",
+            "============================================================================ 1 error in 0.56 seconds =============================================================================",
+        ]
+        self.maxDiff = None
         result = parse(input)
         self.assertEqual(expected, result)

@@ -11,6 +11,7 @@ parse python standard traceback.
 from __future__ import print_function
 
 import re
+from itertools import chain
 
 from .python import parse_traceback
 
@@ -159,27 +160,28 @@ def parse_session_failure(lines):
     :returns: pytest output augmented with specially formatted lines adapted to
         this plugin errorformat which will populate Vim clist.
     """
-    results = []
-    last_traceback = []
-    lines = reversed(lines)
+    def get_traceback(lines):
+        """ Iterates  on traceback block found in lines.  """
+        traceback = []
+        for line in lines:
+            traceback.append(line)
+            if line == '':
+                yield traceback
+                traceback = []
+        yield traceback
 
-    # Skip trailing empty lines
-    for line in lines:
-        if line != "":
-            break
+    tracebacks = list(get_traceback(lines))
 
-    # Capture last traceback block
-    for line in lines:
-        if line == "":
-            break
-        last_traceback.append(line)
+    # Note: It is possible for a session failure to output a sequence of
+    # tracebacks. In all scenarios, parse only the last one because it is the
+    # error origin.
+    last_traceback = iter(tracebacks[-1])
 
-    for line in reversed(last_traceback):
-        results.extend(
-            parse_traceback(lines),
-        )
-    return results
-
+    return chain(
+        chain(*tracebacks[:-1]),
+        parse_traceback(last_traceback),
+        last_traceback,  # Note: `parse_traceback` may have not fully consumed the iterator
+    )
 
 def parse(lines):
     """

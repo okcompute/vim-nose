@@ -183,6 +183,7 @@ def parse_session_failure(lines):
         last_traceback,  # Note: `parse_traceback` may have not fully consumed the iterator
     )
 
+
 def parse(lines):
     """
     Parse a list of lines from nose output.  Mark the last item of a

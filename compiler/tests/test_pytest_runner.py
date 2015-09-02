@@ -3,7 +3,7 @@
 
 import unittest
 
-from output_parser.pytest import (
+from runners.pytest import (
     parse_error,
     parse_conftest_error,
     parse_error_or_failure,
@@ -13,9 +13,9 @@ from output_parser.pytest import (
 )
 
 
-class TestErrorFormat(unittest.TestCase):
+class TestPytestRunner(unittest.TestCase):
 
-    """Test case for errorformat.py module"""
+    """Test case for runners.pytest.py module"""
 
     def test_parse_pytest_error(self):
         input = "E   NameError: name 'asdfasdf' is not defined"
@@ -45,57 +45,57 @@ class TestErrorFormat(unittest.TestCase):
         result = parse_filename_and_line_no(input)
         self.assertIsNone(result)
 
-
     def test_parse_session_failure(self):
-        input = ["Traceback (most recent call last):",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 513, in getconftestmodules",
-        "    return self._path2confmods[path]",
-        "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests')",
-        "",
-        "During handling of the above exception, another exception occurred:",
-        "Traceback (most recent call last):",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 537, in importconftest",
-        "    return self._conftestpath2mod[conftestpath]",
-        "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py')",
-        "",
-        "During handling of the above exception, another exception occurred:",
-        "Traceback (most recent call last):",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 543, in importconftest",
-        "    mod = conftestpath.pyimport()",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/py/_path/local.py\", line 650, in pyimport",
-        "    __import__(modname)",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py\", line 1, in <module>",
-        "    adfasfdasdfasd",
-        "NameError: name 'adfasfdasdfasd' is not defined",
-        "ERROR: could not load /Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py",
+        input = [
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 513, in getconftestmodules",
+            "    return self._path2confmods[path]",
+            "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests')",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 537, in importconftest",
+            "    return self._conftestpath2mod[conftestpath]",
+            "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py')",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 543, in importconftest",
+            "    mod = conftestpath.pyimport()",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/py/_path/local.py\", line 650, in pyimport",
+            "    __import__(modname)",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py\", line 1, in <module>",
+            "    adfasfdasdfasd",
+            "NameError: name 'adfasfdasdfasd' is not defined",
+            "ERROR: could not load /Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py",
         ]
-        expected = ["Traceback (most recent call last):",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 513, in getconftestmodules",
-        "    return self._path2confmods[path]",
-        "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests')",
-        "",
-        "During handling of the above exception, another exception occurred:",
-        "Traceback (most recent call last):",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 537, in importconftest",
-        "    return self._conftestpath2mod[conftestpath]",
-        "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py')",
-        "",
-        "During handling of the above exception, another exception occurred:",
-        "Traceback (most recent call last):",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 543, in importconftest",
-        "    mod = conftestpath.pyimport()",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/py/_path/local.py\", line 650, in pyimport",
-        "    __import__(modname)",
-        "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py\", line 1, in <module>",
-        "    adfasfdasdfasd",
-        "NameError: name 'adfasfdasdfasd' is not defined",
-        "/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py:1 <NameError: name 'adfasfdasdfasd' is not defined>",
-        "ERROR: could not load /Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py",
+        expected = [
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 513, in getconftestmodules",
+            "    return self._path2confmods[path]",
+            "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests')",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 537, in importconftest",
+            "    return self._conftestpath2mod[conftestpath]",
+            "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py')",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 543, in importconftest",
+            "    mod = conftestpath.pyimport()",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/py/_path/local.py\", line 650, in pyimport",
+            "    __import__(modname)",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py\", line 1, in <module>",
+            "    adfasfdasdfasd",
+            "NameError: name 'adfasfdasdfasd' is not defined",
+            "/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py:1 <NameError: name 'adfasfdasdfasd' is not defined>",
+            "ERROR: could not load /Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py",
         ]
         self.maxDiff = None
         result = parse_session_failure(iter(input))
         self.assertEqual(expected, list(result))
-
 
     def test_parse_error_or_failure_with_repeated_filenames(self):
         input = [

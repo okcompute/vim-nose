@@ -3,12 +3,12 @@
 
 import unittest
 
-from output_parser.python import parse_traceback
+from runners.python import parse_traceback
 
 
-class TestPythonParser(unittest.TestCase):
+class TestPythonRunner(unittest.TestCase):
 
-    """Test case for python_parser.py module"""
+    """Test case for runner.python.py module"""
 
     def test_parse_traceback(self):
         input = [

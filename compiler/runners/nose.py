@@ -13,6 +13,11 @@ import re
 
 from .python import parse_traceback
 
+COMMAND = "nosetests"
+"""
+Terminal command to start nosetests.
+"""
+
 
 def parse(lines):
     """

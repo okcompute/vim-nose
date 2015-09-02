@@ -3,14 +3,14 @@
 
 import unittest
 
-from output_parser.nose import (
+from runners.nose import (
     parse,
 )
 
 
-class TestErrorFormat(unittest.TestCase):
+class TestNoseRunner(unittest.TestCase):
 
-    """Test case for errorformat.py module"""
+    """Test case for runners.nose.py module"""
 
     def test_parse_lines(self):
         input = [

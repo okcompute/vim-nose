@@ -9,17 +9,7 @@ endif
 
 CompilerSet efm=%f:%l\ <%m>
 
-" Assign a python script to 'makeprg'. This script will launch the test runner
-" and transform its output for the configured 'errorformat' above.
+" Assign a python script to 'makeprg'. It will launch the runner and transform
+" its output for the configured 'errorformat' above.
 let s:path="python ".expand("<sfile>:p:h")
-if g:vim_python_runner == 'nose'
-    let &l:makeprg=s:path."/run.py nose nosetests"
-elseif g:vim_python_runner == 'pytest'
-    if has('win32') || has('win64')
-        let &l:makeprg=s:path."/run.py pytest py.test.exe --tb=short"
-    else
-        let &l:makeprg=s:path."/run.py pytest py.test --tb=short"
-    endif
-else
-    echoerr "Unknown test runner!: ".g:vim_python_runner
-endif
+let &l:makeprg=s:path."/run.py ".g:vim_python_runner

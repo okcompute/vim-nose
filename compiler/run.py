@@ -11,7 +11,10 @@ from __future__ import print_function
 import subprocess
 import sys
 
-from output_parser import get_parse_function
+from runners import (
+    get_parse_function,
+    get_command,
+)
 
 
 def run(runner, args):
@@ -22,8 +25,16 @@ def run(runner, args):
     :param args: List of command arguments for the test runner.
     """
 
+    cmd = get_command(runner).split()
+    cmd.extend(args)
+
     # Call tests runner with the current args
-    p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     stdout, stderr = p.communicate()
 
     # In python3, the byte array needs to be decoded back to a string

@@ -12,8 +12,18 @@ from __future__ import print_function
 
 import re
 from itertools import chain
+from platform import system
 
 from .python import parse_traceback
+
+
+COMMAND = "py.test --tb=short"
+"""
+Terminal command to start nosetests.
+"""
+
+if system() == 'windows':
+    COMMAND = "py.test.exe --tb=short"
 
 
 def parse_error(line):

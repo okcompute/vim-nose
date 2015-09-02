@@ -6,7 +6,10 @@ if !has('python')
     finish
 endif
 
-let g:vim_python_runner= 'pytest'
+" Default runner is `pytest`
+if !exists("g:vim_python_runner")
+    let g:vim_python_runner= 'pytest'
+endif
 
 " Command Mappings
 " ================

@@ -4,12 +4,13 @@
 import unittest
 
 from runners.pytest import (
-    parse_error,
-    parse_conftest_error,
-    parse_error_or_failure,
-    parse_filename_and_line_no,
-    parse_session_failure,
+    extract_conftest_error,
+    extract_error,
+    extract_filename_and_line_no,
     parse,
+    parse_failure,
+    parse_fixture_error,
+    parse_session_failure,
 )
 
 
@@ -17,50 +18,67 @@ class TestPytestRunner(unittest.TestCase):
 
     """Test case for runners.pytest.py module"""
 
-    def test_parse_pytest_error(self):
+    def test_extract_error(self):
         input = "E   NameError: name 'asdfasdf' is not defined"
         expected = "NameError: name 'asdfasdf' is not defined"
-        result = parse_error(input)
+        result = extract_error(input)
         self.assertEqual(expected, result)
 
-    def test_parse_conftest_error(self):
+    def test_extract_error_when_no_match(self):
+        input = "application/tests/test_dal.py:19: in <module>"
+        result = extract_error(input)
+        self.assertIsNone(result)
+
+    def test_extract_conftest_error(self):
         input = "E   _pytest.config.ConftestImportFailure: (local('/test/conftest.py'), (<class 'ImportError'>, ImportError(\"No module named 'unknown'\",), <traceback object at 0x104226f88>))"
         expected = "/test/conftest.py:1 <No module named 'unknown'>"
-        result = parse_conftest_error(input)
+        result = extract_conftest_error(input)
         self.assertEqual(result, expected)
 
-    def test_parse_pytest_error_when_no_match(self):
-        input = "application/tests/test_dal.py:19: in <module>"
-        result = parse_error(input)
-        self.assertIsNone(result)
-
-    def test_parse_pytest_filename_and_line_no(self):
+    def test_extract_filename_and_line_no(self):
         input = "application/tests/test_dal.py:19: in <module>"
         expected = "application/tests/test_dal.py:19"
-        result = parse_filename_and_line_no(input)
+        result = extract_filename_and_line_no(input)
         self.assertEqual(expected, result)
 
-    def test_parse_pytest_filename_and_line_no_when_no_match(self):
+    def test_extract_filename_and_line_no_when_no_match(self):
         input = "Traceback (most recent call last):"
-        result = parse_filename_and_line_no(input)
+        result = extract_filename_and_line_no(input)
         self.assertIsNone(result)
+
+    def test_parse_fixture_error(self):
+        input = [
+            "===================================================================================== ERRORS =====================================================================================",
+            "________________________________________________________________________ ERROR at setup of test_fixtures _________________________________________________________________________",
+            "ScopeMismatch: You tried to access the 'function' scoped fixture 'function_fixture' with a 'session' scoped request object, involved factories",
+            "okbudget/tests/conftest.py:26:  def session_fixture(function_fixture)",
+        ]
+        expected = [
+            "===================================================================================== ERRORS =====================================================================================",
+            "________________________________________________________________________ ERROR at setup of test_fixtures _________________________________________________________________________",
+            "ScopeMismatch: You tried to access the 'function' scoped fixture 'function_fixture' with a 'session' scoped request object, involved factories",
+            "okbudget/tests/conftest.py:26:  def session_fixture(function_fixture)",
+            "okbudget/tests/conftest.py:26 <You tried to access the 'function' scoped fixture 'function_fixture' with a 'session' scoped request object, involved factories>",
+        ]
+        result = parse_fixture_error('', iter(input))
+        self.assertEqual(expected, result)
 
     def test_parse_session_failure(self):
         input = [
             "Traceback (most recent call last):",
-            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 513, in getconftestmodules",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 513, in getconftestmodules",
             "    return self._path2confmods[path]",
             "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests')",
             "",
             "During handling of the above exception, another exception occurred:",
             "Traceback (most recent call last):",
-            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 537, in importconftest",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 537, in importconftest",
             "    return self._conftestpath2mod[conftestpath]",
             "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py')",
             "",
             "During handling of the above exception, another exception occurred:",
             "Traceback (most recent call last):",
-            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 543, in importconftest",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 543, in importconftest",
             "    mod = conftestpath.pyimport()",
             "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/py/_path/local.py\", line 650, in pyimport",
             "    __import__(modname)",
@@ -71,19 +89,19 @@ class TestPytestRunner(unittest.TestCase):
         ]
         expected = [
             "Traceback (most recent call last):",
-            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 513, in getconftestmodules",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 513, in getconftestmodules",
             "    return self._path2confmods[path]",
             "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests')",
             "",
             "During handling of the above exception, another exception occurred:",
             "Traceback (most recent call last):",
-            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 537, in importconftest",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 537, in importconftest",
             "    return self._conftestpath2mod[conftestpath]",
             "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py')",
             "",
             "During handling of the above exception, another exception occurred:",
             "Traceback (most recent call last):",
-            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/_pytest/config.py\", line 543, in importconftest",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 543, in importconftest",
             "    mod = conftestpath.pyimport()",
             "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/py/_path/local.py\", line 650, in pyimport",
             "    __import__(modname)",
@@ -97,7 +115,7 @@ class TestPytestRunner(unittest.TestCase):
         result = parse_session_failure(iter(input))
         self.assertEqual(expected, list(result))
 
-    def test_parse_error_or_failure_with_repeated_filenames(self):
+    def test_parse_failure_with_repeated_filenames(self):
         input = [
             "self = <application.tests.test_authentication.TestAuthentication testMethod=test_false>",
             "",
@@ -113,7 +131,7 @@ class TestPytestRunner(unittest.TestCase):
             "E   AssertionError: 500 != 200",
         ]
         expected = input + ["application/tests/__init__.py:96 <AssertionError: 500 != 200>"]
-        result = parse_error_or_failure(iter(input))
+        result = parse_failure(iter(input))
         self.assertEqual(expected, result)
 
     def test_parse(self):
@@ -206,7 +224,7 @@ class TestPytestRunner(unittest.TestCase):
         self.maxDiff = None
         self.assertEqual(expected, result)
 
-    def test_parse_with_module_function(self):
+    def test_parse_with_error_in_module_function(self):
         input = [
             "============================================================================== test session starts ===============================================================================",
             "=================================== FAILURES ===================================",
@@ -282,6 +300,46 @@ class TestPytestRunner(unittest.TestCase):
             "E   _pytest.config.ConftestImportFailure: (local('/Users/okcompute/Developer/Git/OkBudgetBackend/okbudget/tests/conftest.py'), (<class 'ImportError'>, ImportError(\"No module named 'tata'\",), <traceback object at 0x104226f88>))",
             "/Users/okcompute/Developer/Git/OkBudgetBackend/okbudget/tests/conftest.py:1 <No module named 'tata'>",
             "============================================================================ 1 error in 0.56 seconds =============================================================================",
+        ]
+        self.maxDiff = None
+        result = parse(input)
+        self.assertEqual(expected, result)
+
+    def test_parse_with_fixture_error(self):
+        input = [
+            "============================================================================== test session starts ===============================================================================",
+            "platform darwin -- Python 3.4.2 -- py-1.4.30 -- pytest-2.7.2",
+            "rootdir: /Users/okcompute/Developer/Git/OkBudgetBackend, inifile: setup.cfg",
+            "collected 48 items",
+            "",
+            "okbudget/tests/test_authentication.py ......",
+            "okbudget/tests/test_dal.py ......................",
+            "okbudget/tests/test_envelope.py ................",
+            "okbudget/tests/test_fixtures.py E",
+            "okbudget/tests/test_users.py ...",
+            "===================================================================================== ERRORS =====================================================================================",
+            "________________________________________________________________________ ERROR at setup of test_fixtures _________________________________________________________________________",
+            "ScopeMismatch: You tried to access the 'function' scoped fixture 'function_fixture' with a 'session' scoped request object, involved factories",
+            "okbudget/tests/conftest.py:26:  def session_fixture(function_fixture)",
+            "okbudget/tests/conftest.py:21:  def function_fixture()",
+        ]
+        expected = [
+            "============================================================================== test session starts ===============================================================================",
+            "platform darwin -- Python 3.4.2 -- py-1.4.30 -- pytest-2.7.2",
+            "rootdir: /Users/okcompute/Developer/Git/OkBudgetBackend, inifile: setup.cfg",
+            "collected 48 items",
+            "",
+            "okbudget/tests/test_authentication.py ......",
+            "okbudget/tests/test_dal.py ......................",
+            "okbudget/tests/test_envelope.py ................",
+            "okbudget/tests/test_fixtures.py E",
+            "okbudget/tests/test_users.py ...",
+            "===================================================================================== ERRORS =====================================================================================",
+            "________________________________________________________________________ ERROR at setup of test_fixtures _________________________________________________________________________",
+            "ScopeMismatch: You tried to access the 'function' scoped fixture 'function_fixture' with a 'session' scoped request object, involved factories",
+            "okbudget/tests/conftest.py:26:  def session_fixture(function_fixture)",
+            "/Users/okcompute/Developer/Git/OkBudgetBackend/okbudget/tests/conftest.py:26 <You tried to access the 'function' scoped fixture 'function_fixture' with a 'session' scoped request object, involved factories>",
+            "okbudget/tests/conftest.py:21:  def function_fixture()",
         ]
         self.maxDiff = None
         result = parse(input)

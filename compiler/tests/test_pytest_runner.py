@@ -4,13 +4,17 @@
 import unittest
 
 from runners.pytest import (
-    extract_conftest_error,
-    extract_error,
-    extract_filename_and_line_no,
+    match_conftest_error,
+    match_error,
+    match_file_location,
+    match_scope_mismatch,
+    match_traceback_code_pattern,
+    match_traceback_file_location,
     parse,
     parse_failure,
     parse_fixture_error,
     parse_session_failure,
+    parse_stderr_call,
 )
 
 
@@ -18,33 +22,98 @@ class TestPytestRunner(unittest.TestCase):
 
     """Test case for runners.pytest.py module"""
 
-    def test_extract_error(self):
-        input = "E   NameError: name 'asdfasdf' is not defined"
-        expected = "NameError: name 'asdfasdf' is not defined"
-        result = extract_error(input)
+    def test_match_scope_mismatch(self):
+        input = "ScopeMismatch: Invalid something"
+        expected = "Invalid something"
+        result = match_scope_mismatch(input)
         self.assertEqual(expected, result)
 
-    def test_extract_error_when_no_match(self):
-        input = "application/tests/test_dal.py:19: in <module>"
-        result = extract_error(input)
-        self.assertIsNone(result)
+    def test_match_file_location(self):
+        input = "application/tests/__init__.py:96: in create_user"
+        expected = {"file_path": "application/tests/__init__.py", "line_no": "96"}
+        result = match_file_location(input)
+        self.assertEqual(expected, result)
 
-    def test_extract_conftest_error(self):
+    def test_match_file_location_when_no_match(self):
+        input = "Traceback (most recent call last):"
+        result = match_file_location(input)
+        self.assertEqual({}, result)
+
+    def test_match_traceback_file_location(self):
+        input = "  File \"/Users/okcompute/Developer/venv/lib/python3.4/site-packages//config.py\", line 513, in getconftestmodules"
+        expected = {
+            "file_path": "/Users/okcompute/Developer/venv/lib/python3.4/site-packages//config.py",
+            "line_no": "513",
+        }
+        result = match_traceback_file_location(input)
+        self.assertEqual(expected, result)
+
+    def test_match_traceback_code_pattern(self):
+        input = "    mod = conftestpath.pyimport()"
+        result = match_traceback_code_pattern(input)
+        self.assertTrue(result)
+
+    def test_match_error(self):
+        input = "E   NameError: name 'asdfasdf' is not defined"
+        expected = {"error": "NameError: name 'asdfasdf' is not defined"}
+        result = match_error(input)
+        self.assertEqual(expected, result)
+
+    def test_match_error_when_no_match(self):
+        input = "application/tests/test_dal.py:19: in <module>"
+        result = match_error(input)
+        self.assertEqual({}, result)
+
+    def test_match_conftest_error(self):
         input = "E   _pytest.config.ConftestImportFailure: (local('/test/conftest.py'), (<class 'ImportError'>, ImportError(\"No module named 'unknown'\",), <traceback object at 0x104226f88>))"
-        expected = "/test/conftest.py:1 <No module named 'unknown'>"
-        result = extract_conftest_error(input)
+        expected = {
+            'file_path': "/test/conftest.py",
+            'error': "No module named 'unknown'",
+        }
+        result = match_conftest_error(input)
         self.assertEqual(result, expected)
 
-    def test_extract_filename_and_line_no(self):
-        input = "application/tests/test_dal.py:19: in <module>"
-        expected = "application/tests/test_dal.py:19"
-        result = extract_filename_and_line_no(input)
+    def test_parse_stderr_call(self):
+        input = [
+            "ERROR:tornado.application:Uncaught exception POST /api/signup (127.0.0.1)",
+            "HTTPServerRequest(protocol='http', host='localhost:55219', method='POST', uri='/api/signup', version='HTTP/1.1', remote_ip='127.0.0.1', headers={'Connection': 'close', 'Content-Type': 'application/json charset=utf-8', 'Host': 'localhost:55219', 'Content-Length': '66', 'Accept-Encoding': 'gzip'})",
+            "Traceback (most recent call last):",
+            "  File \"/Git/Backend/venv/lib/python3.4/site-packages/tornado/web.py\", line 1332, in _execute",
+            "    result = method(*self.path_args, **self.path_kwargs)",
+            "  File \"/Git/Backend/application/rest/__init__.py\", line 135, in wrapper",
+            "    return method(self, *args, **kwargs)",
+            "  File \"/Git/Backend/application/rest/__init__.py\", line 105, in request_wrapper",
+            "    response = request(self, arguments, *args, **kwargs)",
+            "  File \"/Git/Backend/application/rest/authentication.py\", line 105, in post",
+            "    body['email']",
+            "  File \"/Git/Backend/application/dal.py\", line 257, in create_user",
+            "    return self._convert_to_user(user)",
+            "  File \"/Git/Backend/application/dal.py\", line 236, in _convert_to_user",
+            "    blarg",
+            "NameError: name 'blarg' is not defined",
+            "ERROR:tornado.access:500 POST /api/signup (127.0.0.1) 4.70ms",
+        ]
+        expected = [
+            "ERROR:tornado.application:Uncaught exception POST /api/signup (127.0.0.1)",
+            "HTTPServerRequest(protocol='http', host='localhost:55219', method='POST', uri='/api/signup', version='HTTP/1.1', remote_ip='127.0.0.1', headers={'Connection': 'close', 'Content-Type': 'application/json charset=utf-8', 'Host': 'localhost:55219', 'Content-Length': '66', 'Accept-Encoding': 'gzip'})",
+            "Traceback (most recent call last):",
+            "  File \"/Git/Backend/venv/lib/python3.4/site-packages/tornado/web.py\", line 1332, in _execute",
+            "    result = method(*self.path_args, **self.path_kwargs)",
+            "  File \"/Git/Backend/application/rest/__init__.py\", line 135, in wrapper",
+            "    return method(self, *args, **kwargs)",
+            "  File \"/Git/Backend/application/rest/__init__.py\", line 105, in request_wrapper",
+            "    response = request(self, arguments, *args, **kwargs)",
+            "  File \"/Git/Backend/application/rest/authentication.py\", line 105, in post",
+            "    body['email']",
+            "  File \"/Git/Backend/application/dal.py\", line 257, in create_user",
+            "    return self._convert_to_user(user)",
+            "  File \"/Git/Backend/application/dal.py\", line 236, in _convert_to_user",
+            "    blarg",
+            "NameError: name 'blarg' is not defined",
+            "/Git/Backend/application/dal.py:236 <NameError: name 'blarg' is not defined>",
+        ]
+        result = parse_stderr_call(input)
         self.assertEqual(expected, result)
-
-    def test_extract_filename_and_line_no_when_no_match(self):
-        input = "Traceback (most recent call last):"
-        result = extract_filename_and_line_no(input)
-        self.assertIsNone(result)
 
     def test_parse_fixture_error(self):
         input = [
@@ -111,7 +180,6 @@ class TestPytestRunner(unittest.TestCase):
             "/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py:1 <NameError: name 'adfasfdasdfasd' is not defined>",
             "ERROR: could not load /Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py",
         ]
-        self.maxDiff = None
         result = parse_session_failure(iter(input))
         self.assertEqual(expected, list(result))
 
@@ -221,7 +289,6 @@ class TestPytestRunner(unittest.TestCase):
             "ERROR:tornado.access:500 POST /api/signup (127.0.0.1) 4.70ms",
         ]
         result = parse(input)
-        self.maxDiff = None
         self.assertEqual(expected, result)
 
     def test_parse_with_error_in_module_function(self):
@@ -301,7 +368,6 @@ class TestPytestRunner(unittest.TestCase):
             "/Users/okcompute/Developer/Git/OkBudgetBackend/okbudget/tests/conftest.py:1 <No module named 'tata'>",
             "============================================================================ 1 error in 0.56 seconds =============================================================================",
         ]
-        self.maxDiff = None
         result = parse(input)
         self.assertEqual(expected, result)
 
@@ -341,6 +407,5 @@ class TestPytestRunner(unittest.TestCase):
             "/Users/okcompute/Developer/Git/OkBudgetBackend/okbudget/tests/conftest.py:26 <You tried to access the 'function' scoped fixture 'function_fixture' with a 'session' scoped request object, involved factories>",
             "okbudget/tests/conftest.py:21:  def function_fixture()",
         ]
-        self.maxDiff = None
         result = parse(input)
         self.assertEqual(expected, result)

@@ -3,7 +3,7 @@
 
 
 """
-Parse pytest error output and insert a formatted line this plugin understand
+Parse *pytest* error output and insert a formatted line this plugin understand
 when an error is found. It works with py.test error and failure output. It also
 parse python standard traceback.
 """
@@ -15,6 +15,7 @@ import re
 from itertools import chain
 from platform import system
 
+from . import make_error_format
 from .python import parse_traceback
 
 
@@ -27,106 +28,147 @@ if system() == 'windows':
     COMMAND = "py.test.exe --tb=short"
 
 
-def extract_error(line):
+def match_pattern(pattern, line):
     """
-    Find and extract a `pytest` error message.
+    Wrapper on `re` module `compile` and `match` methods.
 
-    :param line: A string to pattern match against.
+    :param pattern: A regex pattern with defined  group. If no groups are
+        defined, the function will always return an empty dictionary.
 
-    :returns: If found, the error as a string extracted from the lines.
-        Otherwise, `None`.
+    :returns: Return matches found in `line` as a dictionary. If no match, an
+        empty dictionary is returned.
     """
-    error_pattern = re.compile(r"E\s+(?P<error>.*)$")
-    m = error_pattern.match(line)
+    pattern = re.compile(pattern)
+    m = pattern.match(line)
     if not m:
-        return None
-    return '{}'.format(m.group('error'))
+        return {}
+    return m.groupdict()
 
 
-def extract_conftest_error(line):
+def match_scope_mismatch(line):
     """
-    Find and extract `ConftestImportFailure` error message.
+    Extract error description from a *pytest's* `ScopeMismatch` exception
+    output.
 
     :param line: A string to pattern match against.
 
-    :returns: If found, the error as a string extracted from the lines.
-        Otherwise, `None`.
+    :returns: A dictionary where the key `error` holds the error description. If
+        not matched, the dictionary is empty.
     """
-    error_pattern = re.compile(
+    result = match_pattern(r"ScopeMismatch: (?P<error>.*)$", line)
+    return result.get('error')
+
+
+def match_file_location(line):
+    """
+    Extract filename path and line number from a *pytest* formatted file
+    location string.
+
+    :param line: A string to pattern match against.
+
+    :returns: A dictionary where the key `file_path` holds the file path and the
+        key `line_no` the line number. If not matched, the dictionary is empty.
+    """
+    return match_pattern(r"(?P<file_path>.*):(?P<line_no>.*):\s.*$", line)
+
+
+def match_traceback_file_location(line):
+    """
+    Extract filename path and line number from a *python* traceback.
+
+    :param line: A string to pattern match against.
+
+    :returns: A dictionary where the key `file_path` holds the file path and the
+        key `line_no` the line number. If not matched, the dictionary is empty.
+    """
+    return match_pattern(
+        r'\s+File "(?P<file_path>.*)", line (?P<line_no>.*), in .*$',
+        line,
+    )
+
+
+def match_traceback_code_pattern(line):
+    """
+    Returns `True` if the `line` match a traceback source code pattern.
+
+    :param line: A string to pattern match against.
+
+    :returns: `True` if the line match the source code pattern.
+    """
+    return re.compile(r"\s+.*").match(line) is not None
+
+
+def match_error(line):
+    """
+    Extract error description from *pytest* error description.
+
+    :param line: A string to pattern match against.
+
+    :returns: A dictionary where the key `error` holds the error description. If
+        not matched, the dictionary is empty.
+    """
+    return match_pattern(r"E\s+(?P<error>.*)$", line)
+
+match_failure = match_error
+"""
+Alias for `match_error`.
+"""
+
+
+def match_conftest_error(line):
+    """
+    Extract `ConftestImportFailure` error message from a string.
+
+    :param line: A string to pattern match against.
+
+    :returns: A dictionary where the key `file_path` holds the file path and the
+        key `error` the error description. If not matched, the dictionary is
+        empty.
+    """
+    return match_pattern(
         r"^E\s+_pytest.config.ConftestImportFailure: "
-        "\(local\('(?P<filename>.*)'\).*ImportError\(\"(?P<error>.*)\",\).*$",
+        "\(local\('(?P<file_path>.*)'\).*ImportError\(\"(?P<error>.*)\",\).*$",
+        line,
     )
-    m = error_pattern.match(line)
-    if not m:
-        return None
-    return '{filename}:1 <{error}>'.format(
-        filename=m.group('filename'),
-        error=m.group('error'),
-    )
-
-
-def extract_filename_and_line_no(line):
-    """
-    Find and extract `pytest` filename and line number from a string.
-
-    :param line: A string to pattern match against.
-
-    :returns: If ound, The error as a string extracted from the lines.
-        Otherwise, `None`.
-    """
-    file_pattern = re.compile(r"(?P<file>.*):(?P<line>.*):.*$")
-    m = file_pattern.match(line)
-    if not m:
-        return None
-    result = ":".join(
-        [
-            m.group('file'),
-            m.group('line'),
-        ],
-    )
-    return result
 
 
 def parse_stderr_call(lines):
     """
-    Iterate lines to find `python` error and its location.Return the information
-    in a concatenated string.
+    Parse captured  *stderr* section from *pytest* output.
 
-    :param lines: A list of strings to pattern match against.
+    :param lines: An iterator on a list of strings to pattern match against.
 
-    :returns: A string with this pattern: `filename:line <error>`
+    :returns: A list of line where the last one is the added *error format*
+        string.
     """
-    filename = None
-    results = []
-    file_pattern = re.compile(r'\s+File "(?P<file>.*)", line (?P<line>.*), in .*$')
-    code_pattern = re.compile(r"\s+.*")
+    file_location = None
+    result = []
     for line in lines:
-        results.append(line)
-        m = file_pattern.match(line)
-        if m:
-            filename = ":".join(
-                [
-                    m.group('file'),
-                    m.group('line'),
-                ],
-            )
-        elif code_pattern.match(line):
+        result.append(line)
+        location = match_traceback_file_location(line)
+        if location:
+            file_location = location
+            continue
+        elif match_traceback_code_pattern(line):
             continue
         else:
-            if filename:
-                results.append(
-                    '{filename} <{error}>'.format(
-                        filename=filename,
-                        error=line,
+            # Iterate until lines don't match a traceback file location or a
+            # source code pattern. *That* list line holds the error description.
+            if file_location:
+                result.append(
+                    make_error_format(
+                        file_location['file_path'],
+                        file_location['line_no'],
+                        line,
                     ),
                 )
                 break
-    return results
+    return result
 
 
 def parse_failure(lines):
     """
-    Iterate lines to find one `pytest` error or failure. Once the error or
+    Iterate lines to find one *pytest* error or failure. Once the error or
     failure, the iteration is stopped (i.e. iterator is not fully consumed).
 
     :param lines: A list of strings to pattern match against.
@@ -134,29 +176,35 @@ def parse_failure(lines):
     :returns: A list of string where an additional element is added when the
         filename and error have been found.
     """
-    filename = None
-    error = None
+    location = None
     result = []
 
     for line in lines:
         result.append(line)
-        error = extract_conftest_error(line)
-        if error:
-            result.append(error)
-            break
-        error = extract_error(line)
-        if error:
+        conftest_error = match_conftest_error(line)
+        if conftest_error:
             result.append(
-                '{filename} <{error}>'.format(
-                    filename=filename,
-                    error=error,
+                make_error_format(
+                    conftest_error['file_path'],
+                    1,
+                    conftest_error['error'],
+                ),
+            )
+            break
+        failure = match_failure(line)
+        if failure:
+            result.append(
+                make_error_format(
+                    location['file_path'],
+                    location['line_no'],
+                    failure['error'],
                 ),
             )
             break
         else:
-            f = extract_filename_and_line_no(line)
-            if f:
-                filename = f
+            file_location = match_file_location(line)
+            if file_location:
+                location = file_location
     return result
 
 
@@ -165,13 +213,13 @@ parse_error = parse_failure
 
 def parse_session_failure(lines):
     """
-    Parse the output when pytest failed to start a session. One or more
+    Parse the output when *pytest* failed to start a session. One or more
     traceback block are displayed. Last traceback error is formatted to the
     plugin errorformat.
 
-    :param lines: list of pytest error output lines.
+    :param lines: list of *pytest* error output lines.
 
-    :returns: pytest output augmented with specially formatted lines adapted to
+    :returns: *pytest* output augmented with specially formatted lines adapted to
         this plugin errorformat which will populate Vim clist.
     """
     def get_traceback(lines):
@@ -200,33 +248,31 @@ def parse_session_failure(lines):
 
 def parse_fixture_error(root_dir, lines):
     """
-    Parse pytest output for a scope error section.
+    Parse *pytest* output of a *fixture error* section.
 
     :param root_dir: Tested project root directory
-    :param lines: list of pytest error output lines.
+    :param lines: list of *pytest* error output lines.
 
-    :returns: pytest output augmented with specially formatted lines adapted to
+    :returns: *pytest* output augmented with specially formatted lines adapted to
         this plugin errorformat which will populate Vim clist.
     """
-    error_pattern = re.compile(r"ScopeMismatch: (?P<error>.*)$")
-    file_pattern = re.compile(r"(?P<file>.*):(?P<line>.*):\s.*$")
     result = []
     for line in lines:
         result.append(line)
-        m = error_pattern.match(line)
-        if m:
+        error = match_scope_mismatch(line)
+        if error:
             line = next(lines)
             result.append(line)
-            fm = file_pattern.match(line)
-            if fm:
-                filename = fm.group('file')
+            file_location = match_file_location(line)
+            if file_location:
+                file_path = file_location['file_path']
                 if root_dir:
-                    filename = os.path.join(root_dir, filename)
+                    file_path = os.path.join(root_dir, file_path)
                 result.append(
-                    '{filename}:{line} <{error}>'.format(
-                        filename=filename,
-                        line=fm.group('line'),
-                        error=m.group('error'),
+                    make_error_format(
+                        file_path,
+                        file_location['line_no'],
+                        error,
                     ),
                 )
             else:
@@ -236,18 +282,18 @@ def parse_fixture_error(root_dir, lines):
 
 def parse(lines):
     """
-    Parse a list of lines from nose output.  Mark the last item of a
-    traceback sequence with `*`.
+    Parse a list of lines from *pytest* output and inject compatible *error
+    format* lines when errors are found..
 
-    :param lines: list of pytest error output lines.
+    :param lines: List of *pytest* error output lines.
 
-    :returns: pytest output augmented with specially formatted lines adapted to
-        this plugin errorformat which will populate Vim clist.
+    :returns: *pytest* output augmented with specially formatted lines adapted to
+        this plugin *error format* which will populate Vim's clist.
     """
     if not lines:
         return []
 
-    results = []
+    result = []
 
     if not re.match(r"=* test session starts =*", lines[0]):
         return parse_session_failure(lines)
@@ -265,21 +311,21 @@ def parse(lines):
     fixture_error = re.compile("_* ERROR at setup of .*")
 
     for line in lines:
-        results.append(line)
+        result.append(line)
         if error.match(line):
-            results.extend(
+            result.extend(
                 parse_error(lines),
             )
         elif stderr_call.match(line):
-            results.extend(
+            result.extend(
                 parse_stderr_call(lines),
             )
         elif fixture_error.match(line):
-            results.extend(
+            result.extend(
                 parse_fixture_error(root_dir, lines),
             )
         elif failure.match(line):
-            results.extend(
+            result.extend(
                 parse_failure(lines),
             )
-    return results
+    return result

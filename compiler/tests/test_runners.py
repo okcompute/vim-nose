@@ -7,6 +7,7 @@ from platform import system
 from runners import (
     get_parse_function,
     get_command,
+    make_error_format,
 )
 from runners.pytest import parse as pytest_parse
 from runners.nose import parse as nose_parse
@@ -45,3 +46,9 @@ class TestRunners(unittest.TestCase):
                 get_command('pytest'),
                 "py.test --tb=short",
             )
+
+    def test_make_error_format(self):
+        self.assertEqual(
+            make_error_format("/a/path", "10", "an error"),
+            "/a/path:10 <an error>",
+        )

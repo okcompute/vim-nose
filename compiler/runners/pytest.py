@@ -239,10 +239,12 @@ def parse_session_failure(lines):
     # error origin.
     last_traceback = iter(tracebacks[-1])
 
-    return chain(
-        chain(*tracebacks[:-1]),
-        parse_traceback(last_traceback),
-        last_traceback,  # Note: `parse_traceback` may have not fully consumed the iterator
+    return list(
+        chain(
+            chain(*tracebacks[:-1]),
+            parse_traceback(last_traceback),
+            last_traceback,  # Note: `parse_traceback` may have not fully consumed the iterator
+        ),
     )
 
 

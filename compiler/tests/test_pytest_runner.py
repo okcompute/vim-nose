@@ -132,6 +132,22 @@ class TestPytestRunner(unittest.TestCase):
         result = parse_fixture_error('', iter(input))
         self.assertEqual(expected, result)
 
+    def test_parse_fixture_error_no_filename_found(self):
+        input = [
+            "===================================================================================== ERRORS =====================================================================================",
+            "________________________________________________________________________ ERROR at setup of test_fixtures _________________________________________________________________________",
+            "ScopeMismatch: You tried to access the 'function' scoped fixture 'function_fixture' with a 'session' scoped request object, involved factories",
+            "This should not be possible but we will test it!",
+        ]
+        expected = [
+            "===================================================================================== ERRORS =====================================================================================",
+            "________________________________________________________________________ ERROR at setup of test_fixtures _________________________________________________________________________",
+            "ScopeMismatch: You tried to access the 'function' scoped fixture 'function_fixture' with a 'session' scoped request object, involved factories",
+            "This should not be possible but we will test it!",
+        ]
+        result = parse_fixture_error('', iter(input))
+        self.assertEqual(expected, result)
+
     def test_parse_session_failure(self):
         input = [
             "Traceback (most recent call last):",
@@ -409,3 +425,57 @@ class TestPytestRunner(unittest.TestCase):
         ]
         result = parse(input)
         self.assertEqual(expected, result)
+
+    def test_parse_with_session_failure(self):
+        input = [
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 513, in getconftestmodules",
+            "    return self._path2confmods[path]",
+            "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests')",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 537, in importconftest",
+            "    return self._conftestpath2mod[conftestpath]",
+            "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py')",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 543, in importconftest",
+            "    mod = conftestpath.pyimport()",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/py/_path/local.py\", line 650, in pyimport",
+            "    __import__(modname)",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py\", line 1, in <module>",
+            "    adfasfdasdfasd",
+            "NameError: name 'adfasfdasdfasd' is not defined",
+            "ERROR: could not load /Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py",
+        ]
+        expected = [
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 513, in getconftestmodules",
+            "    return self._path2confmods[path]",
+            "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests')",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 537, in importconftest",
+            "    return self._conftestpath2mod[conftestpath]",
+            "KeyError: local('/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py')",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "Traceback (most recent call last):",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages//config.py\", line 543, in importconftest",
+            "    mod = conftestpath.pyimport()",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/venv/lib/python3.4/site-packages/py/_path/local.py\", line 650, in pyimport",
+            "    __import__(modname)",
+            "  File \"/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py\", line 1, in <module>",
+            "    adfasfdasdfasd",
+            "NameError: name 'adfasfdasdfasd' is not defined",
+            "/Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py:1 <NameError: name 'adfasfdasdfasd' is not defined>",
+            "ERROR: could not load /Users/okcompute/Developer/Git/okbudgetbackend/okbudget/tests/conftest.py",
+        ]
+        result = parse(input)
+        self.assertEqual(expected, result)
+
+    def test_parse_empty_lines(self):
+        self.assertEqual(parse([]), [])

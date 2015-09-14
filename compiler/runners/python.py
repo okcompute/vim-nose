@@ -17,7 +17,7 @@ from . import (
 )
 
 
-def match_traceback_file_location(line):
+def match_file_location(line):
     """
     Extract filename path and line number from a *python* traceback.
 
@@ -32,7 +32,7 @@ def match_traceback_file_location(line):
     )
 
 
-def match_traceback_code_pattern(line):
+def match_code_pattern(line):
     """
     Returns `True` if the `line` match a traceback source code pattern.
 
@@ -56,11 +56,11 @@ def parse_traceback(lines):
     result = []
     for line in lines:
         result.append(line)
-        location = match_traceback_file_location(line)
+        location = match_file_location(line)
         if location:
             file_location = location
             continue
-        elif match_traceback_code_pattern(line):
+        elif match_code_pattern(line):
             continue
         else:
             # Iterate until lines don't match a traceback file location or a

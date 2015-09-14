@@ -8,13 +8,10 @@ from runners.pytest import (
     match_error,
     match_file_location,
     match_scope_mismatch,
-    match_traceback_code_pattern,
-    match_traceback_file_location,
     parse,
     parse_failure,
     parse_fixture_error,
     parse_session_failure,
-    parse_stderr_call,
 )
 
 
@@ -39,20 +36,6 @@ class TestPytestRunner(unittest.TestCase):
         result = match_file_location(input)
         self.assertEqual({}, result)
 
-    def test_match_traceback_file_location(self):
-        input = "  File \"/Users/okcompute/Developer/venv/lib/python3.4/site-packages//config.py\", line 513, in getconftestmodules"
-        expected = {
-            "file_path": "/Users/okcompute/Developer/venv/lib/python3.4/site-packages//config.py",
-            "line_no": "513",
-        }
-        result = match_traceback_file_location(input)
-        self.assertEqual(expected, result)
-
-    def test_match_traceback_code_pattern(self):
-        input = "    mod = conftestpath.pyimport()"
-        result = match_traceback_code_pattern(input)
-        self.assertTrue(result)
-
     def test_match_error(self):
         input = "E   NameError: name 'asdfasdf' is not defined"
         expected = {"error": "NameError: name 'asdfasdf' is not defined"}
@@ -72,48 +55,6 @@ class TestPytestRunner(unittest.TestCase):
         }
         result = match_conftest_error(input)
         self.assertEqual(result, expected)
-
-    def test_parse_stderr_call(self):
-        input = [
-            "ERROR:tornado.application:Uncaught exception POST /api/signup (127.0.0.1)",
-            "HTTPServerRequest(protocol='http', host='localhost:55219', method='POST', uri='/api/signup', version='HTTP/1.1', remote_ip='127.0.0.1', headers={'Connection': 'close', 'Content-Type': 'application/json charset=utf-8', 'Host': 'localhost:55219', 'Content-Length': '66', 'Accept-Encoding': 'gzip'})",
-            "Traceback (most recent call last):",
-            "  File \"/Git/Backend/venv/lib/python3.4/site-packages/tornado/web.py\", line 1332, in _execute",
-            "    result = method(*self.path_args, **self.path_kwargs)",
-            "  File \"/Git/Backend/application/rest/__init__.py\", line 135, in wrapper",
-            "    return method(self, *args, **kwargs)",
-            "  File \"/Git/Backend/application/rest/__init__.py\", line 105, in request_wrapper",
-            "    response = request(self, arguments, *args, **kwargs)",
-            "  File \"/Git/Backend/application/rest/authentication.py\", line 105, in post",
-            "    body['email']",
-            "  File \"/Git/Backend/application/dal.py\", line 257, in create_user",
-            "    return self._convert_to_user(user)",
-            "  File \"/Git/Backend/application/dal.py\", line 236, in _convert_to_user",
-            "    blarg",
-            "NameError: name 'blarg' is not defined",
-            "ERROR:tornado.access:500 POST /api/signup (127.0.0.1) 4.70ms",
-        ]
-        expected = [
-            "ERROR:tornado.application:Uncaught exception POST /api/signup (127.0.0.1)",
-            "HTTPServerRequest(protocol='http', host='localhost:55219', method='POST', uri='/api/signup', version='HTTP/1.1', remote_ip='127.0.0.1', headers={'Connection': 'close', 'Content-Type': 'application/json charset=utf-8', 'Host': 'localhost:55219', 'Content-Length': '66', 'Accept-Encoding': 'gzip'})",
-            "Traceback (most recent call last):",
-            "  File \"/Git/Backend/venv/lib/python3.4/site-packages/tornado/web.py\", line 1332, in _execute",
-            "    result = method(*self.path_args, **self.path_kwargs)",
-            "  File \"/Git/Backend/application/rest/__init__.py\", line 135, in wrapper",
-            "    return method(self, *args, **kwargs)",
-            "  File \"/Git/Backend/application/rest/__init__.py\", line 105, in request_wrapper",
-            "    response = request(self, arguments, *args, **kwargs)",
-            "  File \"/Git/Backend/application/rest/authentication.py\", line 105, in post",
-            "    body['email']",
-            "  File \"/Git/Backend/application/dal.py\", line 257, in create_user",
-            "    return self._convert_to_user(user)",
-            "  File \"/Git/Backend/application/dal.py\", line 236, in _convert_to_user",
-            "    blarg",
-            "NameError: name 'blarg' is not defined",
-            "/Git/Backend/application/dal.py:236 <NameError: name 'blarg' is not defined>",
-        ]
-        result = parse_stderr_call(input)
-        self.assertEqual(expected, result)
 
     def test_parse_fixture_error(self):
         input = [
@@ -479,3 +420,74 @@ class TestPytestRunner(unittest.TestCase):
 
     def test_parse_empty_lines(self):
         self.assertEqual(parse([]), [])
+
+    def test_parse_when_short_is_not_set(self):
+        """
+        Test the parser behaviour if the pytest command was not run with the
+        --short option set. The error will not be found but the script won't
+        crash.
+        """
+        input = [
+            "============================= test session starts =============================",
+            "platform win32 -- Python 2.7.8 -- py-1.4.30 -- pytest-2.7.2",
+            "rootdir: F:\git\rdv_challenge, inifile: setup.cfg",
+            "plugins: cache, cov, flake8",
+            "collected 274 items",
+            " ",
+            "rdv_challenge\tests\test_configuration.py ...................................................................",
+            "rdv_challenge\tests\bindings\prudp\test_prudp.py ...",
+            "rdv_challenge\tests\bindings\rest\test_private.py ................................................",
+            "rdv_challenge\tests\dal\test_challenge.py ...........................................................",
+            "rdv_challenge\tests\dal\test_redis_interface.py ......F........",
+            "rdv_challenge\tests\dal\test_stages.py .......",
+            "rdv_challenge\tests\rvmc\test_rvmc.py ..",
+            "rdv_challenge\tests\service\test_service.py .........................................................................",
+            " ",
+            "================================== FAILURES ===================================",
+            "_____________ TestRedisInterface.test_challenges_progression_key ______________",
+            " ",
+            "self = <test_redis_interface.TestRedisInterface instance at 0x06CA4170>",
+            "redis = <rdv_challenge.dal.redis_interface.RedisInterface object at 0x06AFB650>",
+            " ",
+            "    def test_challenges_progression_key(self, redis):",
+            ">       assert 'Challenge:challenges:instances:progression:123' == str(",
+            "            redis.get_challenge_progression_key(123),",
+            "        )",
+            "E       AttributeError: 'RedisInterface' object has no attribute 'get_challenge_progression_key'",
+            " ",
+            "rdv_challenge\tests\dal\test_redis_interface.py:45: AttributeError",
+            "==================== 1 failed, 273 passed in 5.10 seconds =====================",
+        ]
+        expected = [
+            "============================= test session starts =============================",
+            "platform win32 -- Python 2.7.8 -- py-1.4.30 -- pytest-2.7.2",
+            "rootdir: F:\git\rdv_challenge, inifile: setup.cfg",
+            "plugins: cache, cov, flake8",
+            "collected 274 items",
+            " ",
+            "rdv_challenge\tests\test_configuration.py ...................................................................",
+            "rdv_challenge\tests\bindings\prudp\test_prudp.py ...",
+            "rdv_challenge\tests\bindings\rest\test_private.py ................................................",
+            "rdv_challenge\tests\dal\test_challenge.py ...........................................................",
+            "rdv_challenge\tests\dal\test_redis_interface.py ......F........",
+            "rdv_challenge\tests\dal\test_stages.py .......",
+            "rdv_challenge\tests\rvmc\test_rvmc.py ..",
+            "rdv_challenge\tests\service\test_service.py .........................................................................",
+            " ",
+            "================================== FAILURES ===================================",
+            "_____________ TestRedisInterface.test_challenges_progression_key ______________",
+            " ",
+            "self = <test_redis_interface.TestRedisInterface instance at 0x06CA4170>",
+            "redis = <rdv_challenge.dal.redis_interface.RedisInterface object at 0x06AFB650>",
+            " ",
+            "    def test_challenges_progression_key(self, redis):",
+            ">       assert 'Challenge:challenges:instances:progression:123' == str(",
+            "            redis.get_challenge_progression_key(123),",
+            "        )",
+            "E       AttributeError: 'RedisInterface' object has no attribute 'get_challenge_progression_key'",
+            " ",
+            "rdv_challenge\tests\dal\test_redis_interface.py:45: AttributeError",
+            "==================== 1 failed, 273 passed in 5.10 seconds =====================",
+        ]
+        result = parse(input)
+        self.assertEqual(expected, result)

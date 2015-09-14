@@ -3,12 +3,30 @@
 
 import unittest
 
-from runners.python import parse_traceback
+from runners.python import (
+    match_traceback_file_location,
+    match_traceback_code_pattern,
+    parse_traceback,
+)
 
 
 class TestPythonRunner(unittest.TestCase):
 
     """Test case for runner.python.py module"""
+
+    def test_match_traceback_file_location(self):
+        input = "  File \"/Users/okcompute/Developer/venv/lib/python3.4/site-packages//config.py\", line 513, in getconftestmodules"
+        expected = {
+            "file_path": "/Users/okcompute/Developer/venv/lib/python3.4/site-packages//config.py",
+            "line_no": "513",
+        }
+        result = match_traceback_file_location(input)
+        self.assertEqual(expected, result)
+
+    def test_match_traceback_code_pattern(self):
+        input = "    mod = conftestpath.pyimport()"
+        result = match_traceback_code_pattern(input)
+        self.assertTrue(result)
 
     def test_parse_traceback(self):
         input = [

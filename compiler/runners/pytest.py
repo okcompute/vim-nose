@@ -15,8 +15,13 @@ import re
 from itertools import chain
 from platform import system
 
-from . import make_error_format
-from .python import parse_traceback
+from . import (
+    make_error_format,
+    match_pattern,
+)
+from .python import (
+    parse_traceback,
+)
 
 
 COMMAND = "py.test --tb=short"
@@ -26,23 +31,6 @@ Terminal command to start nosetests.
 
 if system() == 'windows':
     COMMAND = "py.test.exe --tb=short"
-
-
-def match_pattern(pattern, line):
-    """
-    Wrapper on `re` module `compile` and `match` methods.
-
-    :param pattern: A regex pattern with defined  group. If no groups are
-        defined, the function will always return an empty dictionary.
-
-    :returns: Return matches found in `line` as a dictionary. If no match, an
-        empty dictionary is returned.
-    """
-    pattern = re.compile(pattern)
-    m = pattern.match(line)
-    if not m:
-        return {}
-    return m.groupdict()
 
 
 def match_scope_mismatch(line):
@@ -70,32 +58,6 @@ def match_file_location(line):
         key `line_no` the line number. If not matched, the dictionary is empty.
     """
     return match_pattern(r"(?P<file_path>.*):(?P<line_no>.*):\s.*$", line)
-
-
-def match_traceback_file_location(line):
-    """
-    Extract filename path and line number from a *python* traceback.
-
-    :param line: A string to pattern match against.
-
-    :returns: A dictionary where the key `file_path` holds the file path and the
-        key `line_no` the line number. If not matched, the dictionary is empty.
-    """
-    return match_pattern(
-        r'\s+File "(?P<file_path>.*)", line (?P<line_no>.*), in .*$',
-        line,
-    )
-
-
-def match_traceback_code_pattern(line):
-    """
-    Returns `True` if the `line` match a traceback source code pattern.
-
-    :param line: A string to pattern match against.
-
-    :returns: `True` if the line match the source code pattern.
-    """
-    return re.compile(r"\s+.*").match(line) is not None
 
 
 def match_error(line):
@@ -132,40 +94,6 @@ def match_conftest_error(line):
     )
 
 
-def parse_stderr_call(lines):
-    """
-    Parse captured  *stderr* section from *pytest* output.
-
-    :param lines: An iterator on a list of strings to pattern match against.
-
-    :returns: A list of line where the last one is the added *error format*
-        string.
-    """
-    file_location = None
-    result = []
-    for line in lines:
-        result.append(line)
-        location = match_traceback_file_location(line)
-        if location:
-            file_location = location
-            continue
-        elif match_traceback_code_pattern(line):
-            continue
-        else:
-            # Iterate until lines don't match a traceback file location or a
-            # source code pattern. *That* list line holds the error description.
-            if file_location:
-                result.append(
-                    make_error_format(
-                        file_location['file_path'],
-                        file_location['line_no'],
-                        line,
-                    ),
-                )
-                break
-    return result
-
-
 def parse_failure(lines):
     """
     Iterate lines to find one *pytest* error or failure. Once the error or
@@ -192,7 +120,7 @@ def parse_failure(lines):
             )
             break
         failure = match_failure(line)
-        if failure:
+        if failure and location:
             result.append(
                 make_error_format(
                     location['file_path'],
@@ -320,7 +248,7 @@ def parse(lines):
             )
         elif stderr_call.match(line):
             result.extend(
-                parse_stderr_call(lines),
+                parse_traceback(lines),
             )
         elif fixture_error.match(line):
             result.extend(

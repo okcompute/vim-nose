@@ -11,39 +11,67 @@ from __future__ import print_function
 
 import re
 
+from . import (
+    make_error_format,
+    match_pattern,
+)
+
+
+def match_traceback_file_location(line):
+    """
+    Extract filename path and line number from a *python* traceback.
+
+    :param line: A string to pattern match against.
+
+    :returns: A dictionary where the key `file_path` holds the file path and the
+        key `line_no` the line number. If not matched, the dictionary is empty.
+    """
+    return match_pattern(
+        r'\s+File "(?P<file_path>.*)", line (?P<line_no>.*), in .*$',
+        line,
+    )
+
+
+def match_traceback_code_pattern(line):
+    """
+    Returns `True` if the `line` match a traceback source code pattern.
+
+    :param line: A string to pattern match against.
+
+    :returns: `True` if the line match the source code pattern.
+    """
+    return re.compile(r"\s+.*").match(line) is not None
+
 
 def parse_traceback(lines):
     """
-    Iterate lines to find `python` error and its location.Return the information
-    in a concatenated string.
+    Parse a standard *Python* traceback.
 
-    :param lines: A list of strings to pattern match against.
+    :param lines: An iterator on a list of strings to pattern match against.
 
-    :returns: A string with this pattern: `filename:line <error>`
+    :returns: A list of line where the last one is the added *error format*
+        string.
     """
-    filename = None
-    results = []
-    file_pattern = re.compile(r'\s+File "(?P<file>.*)", line (?P<line>.*), in .*$')
-    code_pattern = re.compile(r"\s+.*")
+    file_location = None
+    result = []
     for line in lines:
-        results.append(line)
-        m = file_pattern.match(line)
-        if m:
-            filename = ":".join(
-                [
-                    m.group('file'),
-                    m.group('line'),
-                ],
-            )
-        elif code_pattern.match(line):
+        result.append(line)
+        location = match_traceback_file_location(line)
+        if location:
+            file_location = location
+            continue
+        elif match_traceback_code_pattern(line):
             continue
         else:
-            if filename:
-                results.append(
-                    '{filename} <{error}>'.format(
-                        filename=filename,
-                        error=line,
+            # Iterate until lines don't match a traceback file location or a
+            # source code pattern. *That* list line holds the error description.
+            if file_location:
+                result.append(
+                    make_error_format(
+                        file_location['file_path'],
+                        file_location['line_no'],
+                        line,
                     ),
                 )
                 break
-    return results
+    return result

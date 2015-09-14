@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import re
 from importlib import import_module
 
 
@@ -34,7 +35,8 @@ def get_command(runner):
 
 def make_error_format(file_path, line_no, error):
     """
-    Generate an 'error format` string recognize by Vim compiler.
+    Generate an 'error format` string recognized by the Vim compiler set by this
+    plugin.
 
     :param file_path: The file path from where the error occurred.
     :param line_no: The line number pointing to the erroneous code.
@@ -47,3 +49,20 @@ def make_error_format(file_path, line_no, error):
         line_no=line_no,
         error=error,
     )
+
+
+def match_pattern(pattern, line):
+    """
+    Wrapper on `re` module `compile` and `match` methods.
+
+    :param pattern: A regex pattern with defined  group. If no groups are
+        defined, the function will always return an empty dictionary.
+
+    :returns: Return matches found in `line` as a dictionary. If no match, an
+        empty dictionary is returned.
+    """
+    pattern = re.compile(pattern)
+    m = pattern.match(line)
+    if not m:
+        return {}
+    return m.groupdict()
